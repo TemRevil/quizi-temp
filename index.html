@@ -80,11 +80,6 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <!-- Add Babel to transpile JSX in the browser -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<!-- Gemini API -->
-<script type="module">
-    import { GoogleGenAI } from "https://esm.run/@google/genai";
-    window.GoogleGenAI = GoogleGenAI;
-</script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
@@ -92,32 +87,6 @@
     <script type="text/babel">
 // React and ReactDOM are now available globally, no imports needed.
 const { useState, useCallback, useEffect, useMemo, useRef } = React;
-
-// --- AUDIO DECODING HELPERS ---
-function decode(base64) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function decodeAudioData(data, ctx, sampleRate, numChannels) {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-    }
-  }
-  return buffer;
-}
-
 
 // --- FROM utils/sound.ts ---
 let audioContext = null;
@@ -1124,7 +1093,7 @@ const quizData = [
     },
     {
         id: 53,
-        type: 'Management Hierarchy',
+        type: 'Management Thinkers',
         question: "Which level of management is primarily responsible for implementing policies and plans and acting as a link between top and lower levels?",
         options: ['Middle Management', 'Top Management', 'Bottom Management', 'Supervisory Management'],
         correctAnswer: 'Middle Management',
@@ -1653,35 +1622,7 @@ const FinalResultCard = ({ total, onRestart, userAnswers }) => {
 
 
 // --- FROM components/QuizCard.tsx ---
-const SpeakerIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path>
-    </svg>
-);
-
-const LoadingSpinner = () => (
-    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-);
-
-const TTSButton = ({ onPlay, isLoading, text }) => (
-    <button
-        onClick={(e) => {
-            e.stopPropagation();
-            onPlay(text);
-        }}
-        disabled={isLoading}
-        className="p-2 rounded-full transition-colors flex-shrink-0"
-        style={{
-          color: 'var(--muted-foreground)',
-        }}
-        aria-label={`Read aloud: ${text}`}
-    >
-        {isLoading ? <LoadingSpinner /> : <SpeakerIcon />}
-    </button>
-);
-
-
-const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext, currentQuestion, totalQuestions, onPlayTTS, ttsLoadingState }) => {
+const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext, currentQuestion, totalQuestions }) => {
   
   const shuffledOptions = useMemo(() => {
     if (type === 'True/False') {
@@ -1786,15 +1727,10 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
                 Question {currentQuestion} / {totalQuestions}
             </p>
             
-            <div className="flex items-center justify-between gap-2 my-4 min-h-[6rem]">
-                <h2 className="text-xl md:text-2xl font-bold leading-relaxed flex-grow">
+            <div className="my-4 min-h-[6rem] flex items-center">
+                <h2 className="text-xl md:text-2xl font-bold leading-relaxed">
                     {question}
                 </h2>
-                 <TTSButton 
-                    onPlay={onPlayTTS}
-                    isLoading={ttsLoadingState[question]}
-                    text={question}
-                />
             </div>
         
             <div className={`w-full ${isTrueFalse ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'flex flex-col space-y-4'}`}>
@@ -1802,15 +1738,10 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
                     <div
                         key={index}
                         onClick={() => !selectedAnswer && onSelectAnswer(option)}
-                        className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 ${!selectedAnswer ? 'cursor-pointer transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
+                        className={`p-4 rounded-xl transition-all duration-300 ${!selectedAnswer ? 'cursor-pointer transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
                         style={getOptionStyles(option)}
                     >
-                        <span className="flex-grow font-semibold text-base md:text-lg">{option}</span>
-                        <TTSButton 
-                            onPlay={onPlayTTS}
-                            isLoading={ttsLoadingState[option]}
-                            text={option}
-                        />
+                        <span className="font-semibold text-base md:text-lg">{option}</span>
                     </div>
                 ))}
             </div>
@@ -1845,81 +1776,16 @@ const App = () => {
     const [isExplanationOpen, setIsExplanationOpen] = useState(false);
     const [currentSelection, setCurrentSelection] = useState(null);
     const [showBatchResult, setShowBatchResult] = useState(false);
-    const [ttsLoadingState, setTtsLoadingState] = useState({});
-    const audioCtxRef = useRef(null);
-    const ttsSourceRef = useRef(null);
 
-    
     useEffect(() => {
         const trueFalse = quizData.filter(q => q.options.length === 2 && q.options.includes('True') && q.options.includes('False')).map(q => ({...q, type: 'True/False'}));
         const otherQuizzes = quizData.filter(q => !(q.options.length === 2 && q.options.includes('True') && q.options.includes('False')));
         setQuestions(shuffleArray([...trueFalse, ...otherQuizzes]));
     }, []);
 
-    const handleTextToSpeech = useCallback(async (text) => {
-        if (ttsLoadingState[text] || !text) return;
-        
-        if (ttsSourceRef.current) {
-            ttsSourceRef.current.stop();
-            ttsSourceRef.current = null;
-        }
-
-        setTtsLoadingState(prev => ({ ...prev, [text]: true }));
-        try {
-            if (!audioCtxRef.current) {
-                audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-            }
-            const outputAudioContext = audioCtxRef.current;
-            
-            const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash-preview-tts",
-                contents: [{ parts: [{ text: `Say: ${text}` }] }],
-                config: {
-                    responseModalities: ['AUDIO'],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: 'Zephyr' },
-                        },
-                    },
-                },
-            });
-
-            const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-            if (base64Audio) {
-                const audioBuffer = await decodeAudioData(
-                    decode(base64Audio),
-                    outputAudioContext,
-                    24000,
-                    1
-                );
-                const source = outputAudioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(outputAudioContext.destination);
-                source.start();
-                ttsSourceRef.current = source;
-                source.onended = () => {
-                    if (ttsSourceRef.current === source) {
-                       ttsSourceRef.current = null;
-                    }
-                };
-            } else {
-                console.error("No audio data received from API.");
-            }
-        } catch (error) {
-            console.error("TTS Error:", error);
-        } finally {
-            setTtsLoadingState(prev => ({ ...prev, [text]: false }));
-        }
-    }, [ttsLoadingState]);
-
     const handleSelectAnswer = useCallback((answer) => {
         if (currentSelection || questions.length === 0) return;
         
-        if (ttsSourceRef.current) {
-            ttsSourceRef.current.stop();
-            ttsSourceRef.current = null;
-        }
         playInteractionSound();
         setCurrentSelection(answer);
         
@@ -1939,10 +1805,6 @@ const App = () => {
     }, [currentSelection, currentQuestionIndex, questions]);
 
     const handleNextQuestion = useCallback(() => {
-        if (ttsSourceRef.current) {
-            ttsSourceRef.current.stop();
-            ttsSourceRef.current = null;
-        }
         playInteractionSound();
         
         const isLastQuestionInBatch = (currentQuestionIndex + 1) % BATCH_SIZE === 0 && (currentQuestionIndex + 1) < questions.length;
@@ -2023,8 +1885,6 @@ const App = () => {
                 onNext={handleNextQuestion}
                 currentQuestion={currentQuestionIndex + 1}
                 totalQuestions={questions.length}
-                onPlayTTS={handleTextToSpeech}
-                ttsLoadingState={ttsLoadingState}
             />
         );
     };
