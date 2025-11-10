@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Organization and Management Principles Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --background: #f9fafb;
+        --foreground: #111827;
+        --card: #ffffff;
+        --card-foreground: #111827;
+        --muted: #f3f4f6;
+        --muted-foreground: #6b7280;
+        --accent: #e5e7eb;
+        --accent-foreground: #1f2937;
+        --border: #f3f4f6;
+        --accent-theme: #3b82f6;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --correct-bg: #ecfdf5;
+        --correct-fg: #059669;
+        --incorrect-bg: #fef2f2;
+        --incorrect-fg: #ef4444;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #111827;
+          --foreground: #f9fafb;
+          --card: #1f2937;
+          --card-foreground: #f9fafb;
+          --muted: #374151;
+          --muted-foreground: #9ca3af;
+          --accent: #374151;
+          --accent-foreground: #f9fafb;
+          --border: #374151;
+          --accent-theme: #60a5fa;
+          --shadow-sm: 0 1px 2px 0 rgb(255 255 255 / 0.02);
+          --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+          --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+          --correct-bg: #10B98120;
+          --correct-fg: #34d399;
+          --incorrect-bg: #EF444420;
+          --incorrect-fg: #f87171;
+        }
+      }
+
+      body {
+        font-family: 'Inter', 'Cairo', sans-serif;
+        background-color: var(--background);
+        color: var(--foreground);
+        transition: background-color 0.3s, color 0.3s;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-theme);
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+  }
+}
+</script>
+<!-- Add Babel to transpile TSX in the browser -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <!-- The root div has been removed. The script will create its own container. -->
+    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

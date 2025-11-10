@@ -1,0 +1,5 @@
+{
+  "name": "Organization and Management Principles Quiz",
+  "description": "A responsive quiz application to test your knowledge of organization and management principles, based on the provided educational materials. Quizzes are presented in batches of 10 questions with results shown after each batch.",
+  "requestFramePermissions": []
+}
