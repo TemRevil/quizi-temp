@@ -80,46 +80,44 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <!-- Add Babel to transpile JSX in the browser -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Gemini API -->
+<script type="module">
+    import { GoogleGenAI } from "https://esm.run/@google/genai";
+    window.GoogleGenAI = GoogleGenAI;
+</script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <!-- The root div will be created and managed by the script. -->
     <script type="text/babel">
 // React and ReactDOM are now available globally, no imports needed.
-const { useState, useCallback, useEffect, useMemo } = React;
+const { useState, useCallback, useEffect, useMemo, useRef } = React;
 
-// --- TYPES (for context) ---
-/*
-interface QuizQuestion {
-    id: number;
-    type: string;
-    question: string;
-    options: string[];
-    correctAnswer: string;
-    arabicTranslation: {
-        question: string;
-        options: { [key: string]: string };
-        hint: string;
-        arabicExplanation: string;
-    };
-    englishExplanation: string;
+// --- AUDIO DECODING HELPERS ---
+function decode(base64) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 }
 
-interface UserAnswer {
-    questionId: number;
-    question: string;
-    userAnswer: string;
-    correctAnswer: string;
-    isCorrect: boolean;
-    englishExplanation: string;
-    arabicTranslation: {
-        question: string;
-        options: { [key: string]: string };
-        hint: string;
-        arabicExplanation: string;
-    };
+async function decodeAudioData(data, ctx, sampleRate, numChannels) {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
 }
-*/
+
 
 // --- FROM utils/sound.ts ---
 let audioContext = null;
@@ -1216,6 +1214,173 @@ const quizData = [
             hint: "لكل مستوى من مستويات الإدارة نوع من المعلومات يناسبه. هل تتطابق كلمة 'تكتيكي' مع 'استراتيجي'؟",
             arabicExplanation: "خطأ. يحدد النص أن المعلومات التكتيكية تستخدم في التخطيط قصير الأجل، بينما المعلومات الاستراتيجية مطلوبة من قبل المديرين على المستوى الاستراتيجي."
         }
+    },
+    {
+        id: 58,
+        type: 'Management Thinkers',
+        question: "Luther Gulick summarized the functions of management with the acronym POSDCORB. What does the 'B' stand for?",
+        options: ['Budgeting', 'Business', 'Balancing', 'Building'],
+        correctAnswer: 'Budgeting',
+        englishExplanation: "Luther Gulick expanded on Fayol's work and summarized the seven functions of management with the famous acronym POSDCORB, where 'B' stands for Budgeting, which includes fiscal planning, accounting, and control.",
+        arabicTranslation: {
+            question: "لخص لوثر جوليك وظائف الإدارة في الاختصار POSDCORB. إلى ماذا يرمز الحرف 'B'؟",
+            options: {
+                'Budgeting': 'الميزانية',
+                'Business': 'الأعمال',
+                'Balancing': 'الموازنة',
+                'Building': 'البناء'
+            },
+            hint: "هذا الجزء من وظائف المدير يتعلق بالتخطيط المالي والرقابة المحاسبية.",
+            arabicExplanation: "وسع لوثر جوليك عمل فايول ولخص وظائف الإدارة السبع في الاختصار الشهير POSDCORB، حيث يرمز الحرف 'B' إلى الميزانية (Budgeting)، والتي تشمل التخطيط المالي والمحاسبة والرقابة."
+        }
+    },
+    {
+        id: 59,
+        type: 'Management Thinkers',
+        question: "According to Warren Haynes & Joseph Massie, which two functions were highlighted as distinct and critical for a manager, in addition to the traditional ones?",
+        options: ['Decision-making and Communicating', 'Marketing and Sales', 'Innovating and Researching', 'Hiring and Firing'],
+        correctAnswer: 'Decision-making and Communicating',
+        englishExplanation: "Warren Haynes & Joseph Massie further refined the understanding of managerial functions, notably highlighting decision-making and communicating as distinct and critical functions for a manager.",
+        arabicTranslation: {
+            question: "وفقًا لوارين هاينز وجوزيف ماسي، ما هما الوظيفتان اللتان تم تسليط الضوء عليهما كونهما مميزتين وحاسمتين للمدير، بالإضافة إلى الوظائف التقليدية؟",
+            options: {
+                'Decision-making and Communicating': 'اتخاذ القرار والتواصل',
+                'Marketing and Sales': 'التسويق والمبيعات',
+                'Innovating and Researching': 'الابتكار والبحث',
+                'Hiring and Firing': 'التوظيف والفصل'
+            },
+            hint: "فكر في الأنشطة التي يقوم بها المديرون باستمرار والتي تربط جميع الوظائف الأخرى معًا.",
+            arabicExplanation: "قام وارين هاينز وجوزيف ماسي بتطوير فهم الوظائف الإدارية، وسلطا الضوء بشكل خاص على اتخاذ القرار والتواصل كونهما وظيفتين مميزتين وحاسمتين للمدير."
+        }
+    },
+    {
+        id: 60,
+        type: 'True/False',
+        question: "The vision of Koontz & O'Donnell was to create a complex and theoretical framework for management, applicable only to large corporations.",
+        options: ['False', 'True'],
+        correctAnswer: 'False',
+        englishExplanation: "False. The vision of Koontz & O'Donnell was to create a clear and widely applicable framework. They simplified and grouped the functions into five essential categories, which became a widely accepted model.",
+        arabicTranslation: {
+            question: "كانت رؤية كونتز وأودونيل هي إنشاء إطار عمل معقد ونظري للإدارة، ينطبق فقط على الشركات الكبيرة.",
+            options: {
+                'False': 'خطأ',
+                'True': 'صحيح'
+            },
+            hint: "ركز هؤلاء المؤلفون على التبسيط والوضوح لجعل الإدارة مفهومة وقابلة للتطبيق في كل مكان.",
+            arabicExplanation: "خطأ. كانت رؤية كونتز وأودونيل هي إنشاء إطار عمل واضح وقابل للتطبيق على نطاق واسع. لقد قاما بتبسيط وتجميع الوظائف في خمس فئات أساسية، والتي أصبحت نموذجًا مقبولًا على نطاق واسع."
+        }
+    },
+    {
+        id: 61,
+        type: 'Core Concepts',
+        question: "In the context of Planning, what does 'Formulation' involve?",
+        options: ['Creating the detailed plans, strategies, and policies', 'Executing the plan and assigning tasks', 'Defining the organization\'s main objectives', 'Measuring the results of the plan'],
+        correctAnswer: 'Creating the detailed plans, strategies, and policies',
+        englishExplanation: "Formulation is the 'how-to' part of planning. It involves creating the detailed plans, strategies, policies, and procedures that will guide the organization toward its determined objectives.",
+        arabicTranslation: {
+            question: "في سياق التخطيط، ماذا تتضمن 'الصياغة' (Formulation)؟",
+            options: {
+                'Creating the detailed plans, strategies, and policies': 'إنشاء الخطط والاستراتيجيات والسياسات التفصيلية',
+                'Executing the plan and assigning tasks': 'تنفيذ الخطة وإسناد المهام',
+                'Defining the organization\'s main objectives': 'تحديد الأهداف الرئيسية للمنظمة',
+                'Measuring the results of the plan': 'قياس نتائج الخطة'
+            },
+            hint: "هذه هي المرحلة التي يتم فيها رسم الخريطة التفصيلية للوصول إلى الهدف. إنها تجيب على سؤال 'كيف'.",
+            arabicExplanation: "الصياغة هي الجزء المتعلق بـ 'كيفية' التخطيط. وهي تتضمن إنشاء الخطط والاستراتيجيات والسياسات والإجراءات التفصيلية التي ستوجه المنظمة نحو أهدافها المحددة."
+        }
+    },
+    {
+        id: 62,
+        type: 'Terminology',
+        question: "The act of entrusting subordinates with the authority and responsibility to perform their assigned tasks is known as:",
+        options: ['Delegation', 'Assignment', 'Grouping', 'Identification'],
+        correctAnswer: 'Delegation',
+        englishExplanation: "Delegation is a key part of organizing. It is the act of a manager entrusting subordinates with the authority and responsibility to effectively carry out their assigned tasks.",
+        arabicTranslation: {
+            question: "يُعرف فعل إعطاء المرؤوسين السلطة والمسؤولية لأداء مهامهم الموكلة إليهم بـ:",
+            options: {
+                'Delegation': 'التفويض',
+                'Assignment': 'الإسناد',
+                'Grouping': 'التجميع',
+                'Identification': 'التحديد'
+            },
+            hint: "هذا المفهوم لا يتعلق فقط بإعطاء المهام، بل أيضًا بمنح السلطة اللازمة لإنجازها.",
+            arabicExplanation: "التفويض هو جزء أساسي من التنظيم. وهو فعل يقوم به المدير بإعطاء المرؤوسين السلطة والمسؤولية لتنفيذ مهامهم الموكلة إليهم بفعالية."
+        }
+    },
+    {
+        id: 63,
+        type: 'True/False',
+        question: "In staffing, 'Transfers' refers to the movement of an employee to a higher-level job with more responsibility.",
+        options: ['False', 'True'],
+        correctAnswer: 'False',
+        englishExplanation: "False. 'Transfers' involve the movement of an employee from one job to another at the same level within the organization. Movement to a higher level is a promotion.",
+        arabicTranslation: {
+            question: "في التوظيف، يشير 'النقل' (Transfers) إلى انتقال الموظف إلى وظيفة ذات مستوى أعلى مع مسؤولية أكبر.",
+            options: {
+                'False': 'خطأ',
+                'True': 'صحيح'
+            },
+            hint: "النقل هو حركة أفقية، وليس عمودية. الحركة العمودية لأعلى تسمى شيئًا آخر.",
+            arabicExplanation: "خطأ. يتضمن 'النقل' انتقال الموظف من وظيفة إلى أخرى على نفس المستوى داخل المنظمة. الانتقال إلى مستوى أعلى يسمى ترقية."
+        }
+    },
+    {
+        id: 64,
+        type: 'Terminology',
+        question: "The ability of a manager to influence, guide, and supervise subordinates in their work to achieve common objectives is called:",
+        options: ['Leadership', 'Motivation', 'Communication', 'Controlling'],
+        correctAnswer: 'Leadership',
+        englishExplanation: "Leadership is a core component of the directing function. It is defined as the ability of a manager to influence, guide, and supervise subordinates to work towards achieving shared goals.",
+        arabicTranslation: {
+            question: "تسمى قدرة المدير على التأثير في المرؤوسين وتوجيههم والإشراف عليهم في عملهم لتحقيق الأهداف المشتركة:",
+            options: {
+                'Leadership': 'القيادة',
+                'Motivation': 'التحفيز',
+                'Communication': 'التواصل',
+                'Controlling': 'الرقابة'
+            },
+            hint: "هذا المفهوم يتعلق بالتأثير في الآخرين وتوجيههم، وهو عنصر أساسي في وظيفة التوجيه.",
+            arabicExplanation: "القيادة هي مكون أساسي في وظيفة التوجيه. وتُعرَّف بأنها قدرة المدير على التأثير في المرؤوسين وتوجيههم والإشراف عليهم للعمل نحو تحقيق الأهداف المشتركة."
+        }
+    },
+    {
+        id: 65,
+        type: 'Core Concepts',
+        question: "Which principle states that all activities and efforts within an organization should be directed toward the same common goals?",
+        options: ['Unity of Direction', 'Unity of Command', 'Clear Definition of Authority', 'Effective Leadership'],
+        correctAnswer: 'Unity of Direction',
+        englishExplanation: "'Unity of Direction' is a key principle of coordination. It states that all activities and efforts, especially those within a single department or plan, must be directed toward the same common organizational goals.",
+        arabicTranslation: {
+            question: "أي مبدأ ينص على أن جميع الأنشطة والجهود داخل المنظمة يجب أن تكون موجهة نحو نفس الأهداف المشتركة؟",
+            options: {
+                'Unity of Direction': 'وحدة التوجيه',
+                'Unity of Command': 'وحدة الأمر',
+                'Clear Definition of Authority': 'تعريف واضح للسلطة',
+                'Effective Leadership': 'القيادة الفعالة'
+            },
+            hint: "هذا المبدأ يضمن أن الجميع يسيرون في نفس الاتجاه لتحقيق هدف واحد مشترك.",
+            arabicExplanation: "مبدأ 'وحدة التوجيه' هو مبدأ أساسي في التنسيق. وينص على أن جميع الأنشطة والجهود، خاصة تلك التي تندرج ضمن قسم واحد أو خطة واحدة، يجب أن تكون موجهة نحو نفس الأهداف التنظيمية المشتركة."
+        }
+    },
+    {
+        id: 66,
+        type: 'Core Concepts',
+        question: "'Corrective Actions' in the controlling function can involve:",
+        options: ['Fixing deviations and modifying original plans if needed', 'Only fixing deviations from the plan', 'Only firing underperforming employees', 'Ignoring all deviations unless they are major'],
+        correctAnswer: 'Fixing deviations and modifying original plans if needed',
+        englishExplanation: "Corrective Actions are about bringing performance back in line with goals. This not only involves fixing deviations but can also include modifying the original plans if they are found to be unrealistic.",
+        arabicTranslation: {
+            question: "يمكن أن تتضمن 'الإجراءات التصحيحية' في وظيفة الرقابة:",
+            options: {
+                'Fixing deviations and modifying original plans if needed': 'إصلاح الانحرافات وتعديل الخطط الأصلية إذا لزم الأمر',
+                'Only fixing deviations from the plan': 'فقط إصلاح الانحرافات عن الخطة',
+                'Only firing underperforming employees': 'فقط فصل الموظفين ذوي الأداء الضعيف',
+                'Ignoring all deviations unless they are major': 'تجاهل جميع الانحرافات ما لم تكن كبيرة'
+            },
+            hint: "الإجراءات التصحيحية ليست دائمًا عن إعادة الأداء إلى الخطة؛ أحيانًا، تكون الخطة نفسها بحاجة إلى تعديل.",
+            arabicExplanation: "تدور الإجراءات التصحيحية حول إعادة الأداء إلى ما يتماشى مع الأهداف. وهذا لا يشمل فقط إصلاح الانحرافات، بل يمكن أن يشمل أيضًا تعديل الخطط الأصلية إذا تبين أنها غير واقعية."
+        }
     }
 ];
 
@@ -1268,7 +1433,7 @@ const ExplanationWidget = ({ isOpen, onClose, details }) => {
         return null;
     }
 
-    const { translation, showFullDetails } = details;
+    const { translation, showOptions, showAnswerExplanation } = details;
 
     return (
         <div 
@@ -1307,7 +1472,7 @@ const ExplanationWidget = ({ isOpen, onClose, details }) => {
                         <p className="font-bold">السؤال المترجم:</p>
                         <p>{translation.question}</p>
                     </div>
-                    {showFullDetails && (
+                    {showOptions && (
                         <div>
                             <p className="font-bold">الخيارات المترجمة:</p>
                             <ul className="list-disc pr-5 mt-2 space-y-2">
@@ -1323,7 +1488,7 @@ const ExplanationWidget = ({ isOpen, onClose, details }) => {
                         <p className="font-bold">تلميح:</p>
                         <p>{translation.hint}</p>
                     </div>
-                    {showFullDetails && translation.arabicExplanation && (
+                    {showAnswerExplanation && translation.arabicExplanation && (
                         <div>
                             <p className="font-bold">شرح الإجابة:</p>
                             <p>{translation.arabicExplanation}</p>
@@ -1488,7 +1653,35 @@ const FinalResultCard = ({ total, onRestart, userAnswers }) => {
 
 
 // --- FROM components/QuizCard.tsx ---
-const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext, currentQuestion, totalQuestions }) => {
+const SpeakerIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path>
+    </svg>
+);
+
+const LoadingSpinner = () => (
+    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+);
+
+const TTSButton = ({ onPlay, isLoading, text }) => (
+    <button
+        onClick={(e) => {
+            e.stopPropagation();
+            onPlay(text);
+        }}
+        disabled={isLoading}
+        className="p-2 rounded-full transition-colors flex-shrink-0"
+        style={{
+          color: 'var(--muted-foreground)',
+        }}
+        aria-label={`Read aloud: ${text}`}
+    >
+        {isLoading ? <LoadingSpinner /> : <SpeakerIcon />}
+    </button>
+);
+
+
+const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext, currentQuestion, totalQuestions, onPlayTTS, ttsLoadingState }) => {
   
   const shuffledOptions = useMemo(() => {
     if (type === 'True/False') {
@@ -1497,7 +1690,7 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
     return shuffleArray(options)
   }, [options, type]);
 
-  const getButtonStyles = (option) => {
+  const getOptionStyles = (option) => {
     if (!selectedAnswer) {
       return {
         backgroundColor: 'var(--accent)',
@@ -1593,21 +1786,32 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
                 Question {currentQuestion} / {totalQuestions}
             </p>
             
-            <h2 className="text-xl md:text-2xl font-bold leading-relaxed my-4 min-h-[6rem] flex items-center">
-                {question}
-            </h2>
+            <div className="flex items-center justify-between gap-2 my-4 min-h-[6rem]">
+                <h2 className="text-xl md:text-2xl font-bold leading-relaxed flex-grow">
+                    {question}
+                </h2>
+                 <TTSButton 
+                    onPlay={onPlayTTS}
+                    isLoading={ttsLoadingState[question]}
+                    text={question}
+                />
+            </div>
         
             <div className={`w-full ${isTrueFalse ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'flex flex-col space-y-4'}`}>
                 {shuffledOptions.map((option, index) => (
-                <button
-                    key={index}
-                    onClick={() => onSelectAnswer(option)}
-                    disabled={!!selectedAnswer}
-                    className={`p-4 rounded-xl text-left font-semibold text-base md:text-lg transition-all duration-300 ${!selectedAnswer ? 'transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
-                    style={getButtonStyles(option)}
-                >
-                    {option}
-                </button>
+                    <div
+                        key={index}
+                        onClick={() => !selectedAnswer && onSelectAnswer(option)}
+                        className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 ${!selectedAnswer ? 'cursor-pointer transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
+                        style={getOptionStyles(option)}
+                    >
+                        <span className="flex-grow font-semibold text-base md:text-lg">{option}</span>
+                        <TTSButton 
+                            onPlay={onPlayTTS}
+                            isLoading={ttsLoadingState[option]}
+                            text={option}
+                        />
+                    </div>
                 ))}
             </div>
             <div className="mt-8 flex justify-center">
@@ -1641,6 +1845,10 @@ const App = () => {
     const [isExplanationOpen, setIsExplanationOpen] = useState(false);
     const [currentSelection, setCurrentSelection] = useState(null);
     const [showBatchResult, setShowBatchResult] = useState(false);
+    const [ttsLoadingState, setTtsLoadingState] = useState({});
+    const audioCtxRef = useRef(null);
+    const ttsSourceRef = useRef(null);
+
     
     useEffect(() => {
         const trueFalse = quizData.filter(q => q.options.length === 2 && q.options.includes('True') && q.options.includes('False')).map(q => ({...q, type: 'True/False'}));
@@ -1648,9 +1856,70 @@ const App = () => {
         setQuestions(shuffleArray([...trueFalse, ...otherQuizzes]));
     }, []);
 
+    const handleTextToSpeech = useCallback(async (text) => {
+        if (ttsLoadingState[text] || !text) return;
+        
+        if (ttsSourceRef.current) {
+            ttsSourceRef.current.stop();
+            ttsSourceRef.current = null;
+        }
+
+        setTtsLoadingState(prev => ({ ...prev, [text]: true }));
+        try {
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            }
+            const outputAudioContext = audioCtxRef.current;
+            
+            const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash-preview-tts",
+                contents: [{ parts: [{ text: `Say: ${text}` }] }],
+                config: {
+                    responseModalities: ['AUDIO'],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: 'Zephyr' },
+                        },
+                    },
+                },
+            });
+
+            const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            if (base64Audio) {
+                const audioBuffer = await decodeAudioData(
+                    decode(base64Audio),
+                    outputAudioContext,
+                    24000,
+                    1
+                );
+                const source = outputAudioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(outputAudioContext.destination);
+                source.start();
+                ttsSourceRef.current = source;
+                source.onended = () => {
+                    if (ttsSourceRef.current === source) {
+                       ttsSourceRef.current = null;
+                    }
+                };
+            } else {
+                console.error("No audio data received from API.");
+            }
+        } catch (error) {
+            console.error("TTS Error:", error);
+        } finally {
+            setTtsLoadingState(prev => ({ ...prev, [text]: false }));
+        }
+    }, [ttsLoadingState]);
+
     const handleSelectAnswer = useCallback((answer) => {
         if (currentSelection || questions.length === 0) return;
-
+        
+        if (ttsSourceRef.current) {
+            ttsSourceRef.current.stop();
+            ttsSourceRef.current = null;
+        }
         playInteractionSound();
         setCurrentSelection(answer);
         
@@ -1670,6 +1939,10 @@ const App = () => {
     }, [currentSelection, currentQuestionIndex, questions]);
 
     const handleNextQuestion = useCallback(() => {
+        if (ttsSourceRef.current) {
+            ttsSourceRef.current.stop();
+            ttsSourceRef.current = null;
+        }
         playInteractionSound();
         
         const isLastQuestionInBatch = (currentQuestionIndex + 1) % BATCH_SIZE === 0 && (currentQuestionIndex + 1) < questions.length;
@@ -1702,8 +1975,8 @@ const App = () => {
         setShowBatchResult(false);
     }, []);
     
-    const handleShowExplanation = (translation, showFullDetails = false) => {
-      setExplanationDetails({ translation, showFullDetails });
+    const handleShowExplanation = (translation, showOptions = false, showAnswerExplanation = false) => {
+      setExplanationDetails({ translation, showOptions, showAnswerExplanation });
       setIsExplanationOpen(true);
     };
 
@@ -1732,7 +2005,7 @@ const App = () => {
                     total={BATCH_SIZE}
                     onContinue={handleContinueAfterBatch}
                     batchAnswers={batchAnswers}
-                    onShowExplanation={(translation) => handleShowExplanation(translation, true)}
+                    onShowExplanation={(translation) => handleShowExplanation(translation, true, true)}
                 />
             );
         }
@@ -1744,12 +2017,14 @@ const App = () => {
                 question={currentQuestion.question}
                 options={currentQuestion.options}
                 onSelectAnswer={handleSelectAnswer}
-                onHelpClick={() => handleShowExplanation(currentQuestion.arabicTranslation, false)}
+                onHelpClick={() => handleShowExplanation(currentQuestion.arabicTranslation, true)}
                 selectedAnswer={currentSelection}
                 correctAnswer={currentQuestion.correctAnswer}
                 onNext={handleNextQuestion}
                 currentQuestion={currentQuestionIndex + 1}
                 totalQuestions={questions.length}
+                onPlayTTS={handleTextToSpeech}
+                ttsLoadingState={ttsLoadingState}
             />
         );
     };
