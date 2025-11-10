@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -19,8 +18,9 @@
         --muted-foreground: #6b7280;
         --accent: #e5e7eb;
         --accent-foreground: #1f2937;
-        --border: #f3f4f6;
+        --border: #e5e7eb;
         --accent-theme: #3b82f6;
+        --accent-theme-fg: #ffffff;
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -32,16 +32,17 @@
       
       @media (prefers-color-scheme: dark) {
         :root {
-          --background: #111827;
+          --background: #030712;
           --foreground: #f9fafb;
           --card: #1f2937;
           --card-foreground: #f9fafb;
-          --muted: #374151;
+          --muted: #111827;
           --muted-foreground: #9ca3af;
           --accent: #374151;
           --accent-foreground: #f9fafb;
           --border: #374151;
           --accent-theme: #60a5fa;
+          --accent-theme-fg: #111827;
           --shadow-sm: 0 1px 2px 0 rgb(255 255 255 / 0.02);
           --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
           --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
@@ -54,10 +55,9 @@
 
       body {
         font-family: 'Inter', 'Cairo', sans-serif;
-        background-color: var(--background);
+        background-color: var(--muted);
         color: var(--foreground);
         transition: background-color 0.3s, color 0.3s;
-        background-image: radial-gradient(circle at top, var(--muted) 0%, var(--background) 40%);
       }
       /* Custom scrollbar */
       ::-webkit-scrollbar {
@@ -89,7 +89,6 @@
 const { useState, useCallback, useEffect, useMemo } = React;
 
 // --- TYPES (for context) ---
-// These are TypeScript interfaces; Babel will handle them.
 /*
 interface QuizQuestion {
     id: number;
@@ -101,6 +100,7 @@ interface QuizQuestion {
         question: string;
         options: { [key: string]: string };
         hint: string;
+        arabicExplanation: string;
     };
     englishExplanation: string;
 }
@@ -112,6 +112,12 @@ interface UserAnswer {
     correctAnswer: string;
     isCorrect: boolean;
     englishExplanation: string;
+    arabicTranslation: {
+        question: string;
+        options: { [key: string]: string };
+        hint: string;
+        arabicExplanation: string;
+    };
 }
 */
 
@@ -178,7 +184,8 @@ const quizData = [
                 'Financial accounting rules': "قواعد المحاسبة المالية",
                 'Marketing strategies': "استراتيجيات التسويق"
             },
-            hint: "فكر في العوامل المتعددة التي تتفاعل داخل أي منظمة، مثل الأشخاص والتقنيات، وكيف أن هذا التفاعل يجعل النتائج غير مؤكدة."
+            hint: "فكر في العوامل المتعددة التي تتفاعل داخل أي منظمة، مثل الأشخاص والتقنيات، وكيف أن هذا التفاعل يجعل النتائج غير مؤكدة.",
+            arabicExplanation: "التعقيدات هي طبقات من العوامل المترابطة (مثل الأشخاص والعمليات والتكنولوجيا) التي تجعل التنبؤ بالمواقف أو التحكم فيها أكثر صعوبة."
         },
         englishExplanation: "Complexities are layers of interrelated factors (like people, processes, tech) that make situations harder to predict or control."
     },
@@ -196,7 +203,8 @@ const quizData = [
                 'Employee satisfaction': "رضا الموظفين",
                 'Market share': "الحصة السوقية"
             },
-            hint: "الإدارة لا تقتصر على تحقيق الأرباح فقط. فكر في الهدف الأساسي الذي تسعى إليه أي منظمة، سواء كانت شركة، مستشفى، أو مؤسسة خيرية."
+            hint: "الإدارة لا تقتصر على تحقيق الأرباح فقط. فكر في الهدف الأساسي الذي تسعى إليه أي منظمة، سواء كانت شركة، مستشفى، أو مؤسسة خيرية.",
+            arabicExplanation: "الإدارة هي عملية هادفة تهدف إلى تحقيق نتائج محددة من خلال تنسيق الأشخاص والموارد عبر التخطيط والتنظيم والتوجيه والرقابة."
         },
         englishExplanation: "Management is a purposeful process aimed at achieving specific results by coordinating people and resources through planning, organizing, directing, and controlling."
     },
@@ -214,7 +222,8 @@ const quizData = [
                 'Ordway Tead': "أوردواي تيد",
                 'Henri Fayol': "هنري فايول"
             },
-            hint: "هذا المفكر الإداري الشهير ركز على أن المنظمات هي كيانات اجتماعية. تعريفه يبرز الجانب الإنساني والعملي للإدارة بدلاً من مجرد كونها مجموعة من العمليات التقنية."
+            hint: "هذا المفكر الإداري الشهير ركز على أن المنظمات هي كيانات اجتماعية. تعريفه يبرز الجانب الإنساني والعملي للإدارة بدلاً من مجرد كونها مجموعة من العمليات التقنية.",
+            arabicExplanation: "قدم بيتر ف. دراكر، وهو مستشار إداري ومؤلف مشهور، هذا التعريف، مؤكدًا على الطبيعة الاجتماعية والموجهة نحو النتائج للإدارة."
         },
         englishExplanation: "Peter F. Drucker, a renowned management consultant and author, provided this definition, emphasizing the social and results-oriented nature of management."
     },
@@ -230,7 +239,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "فكر في عناصر الإنتاج الأساسية (الأرض، العمل، رأس المال). هل تعمل هذه العناصر بمفردها، أم أنها تحتاج إلى عنصر آخر لتجميعها وتوجيهها بفعالية؟"
+            hint: "فكر في عناصر الإنتاج الأساسية (الأرض، العمل، رأس المال). هل تعمل هذه العناصر بمفردها، أم أنها تحتاج إلى عنصر آخر لتجميعها وتوجيهها بفعالية؟",
+            arabicExplanation: "صحيح. تعتبر الإدارة عامل إنتاج رئيسي، حيث تعمل كعامل مساعد يجمع ويدمج الأرض والعمل ورأس المال لإنتاج السلع والخدمات."
         },
         englishExplanation: "True. Management is considered a key factor of production, acting as the catalyst that assembles and integrates land, labor, and capital to produce goods and services."
     },
@@ -248,7 +258,8 @@ const quizData = [
                 'Organizing': "التنظيم",
                 'Controlling': "الرقابة"
             },
-            hint: "حدد جورج ر. تيري أربع وظائف أساسية تعتبر حجر الزاوية في العملية الإدارية. ابحث عن الخيار الذي لا يعتبر جزءًا من هذا الهيكل الأساسي التقليدي."
+            hint: "حدد جورج ر. تيري أربع وظائف أساسية تعتبر حجر الزاوية في العملية الإدارية. ابحث عن الخيار الذي لا يعتبر جزءًا من هذا الهيكل الأساسي التقليدي.",
+            arabicExplanation: "عرّف جورج ر. تيري الإدارة بأنها عملية تتكون من أربع وظائف رئيسية: التخطيط، التنظيم، التنفيذ (التوجيه)، والرقابة. الابتكار، على الرغم من أهميته، لم يكن واحداً من وظائفه الأربع الأساسية."
         },
         englishExplanation: "George R. Terry defined management as a process consisting of four key functions: planning, organizing, actuating (directing), and controlling. Innovation, while important, was not one of his core four."
     },
@@ -264,7 +275,8 @@ const quizData = [
                 'False': "خطأ",
                 'True': "صحيح"
             },
-            hint: "كلمة 'هادف' أو 'موجه نحو الهدف' تشير إلى وجود نية وغرض محدد. هل يمكن أن يكون النشاط الذي له غرض محدد عشوائيًا؟"
+            hint: "كلمة 'هادف' أو 'موجه نحو الهدف' تشير إلى وجود نية وغرض محدد. هل يمكن أن يكون النشاط الذي له غرض محدد عشوائيًا؟",
+            arabicExplanation: "خطأ. 'موجه نحو الهدف' يعني أن الإدارة نشاط هادف ينسق الجهود لتحقيق أهداف تنظيمية محددة جيدًا."
         },
         englishExplanation: "False. 'Goal Oriented' means management is a purposeful activity that coordinates efforts to achieve well-defined organizational goals."
     },
@@ -282,7 +294,8 @@ const quizData = [
                 'Each function is completely independent of the others': "كل وظيفة مستقلة تمامًا عن الأخرى",
                 'Only one function can be performed at a time': "يمكن أداء وظيفة واحدة فقط في كل مرة"
             },
-            hint: "تخيل خيوط نسيج متشابكة. هل يمكنك بسهولة فصل خيط واحد أو تتبع مساره بترتيب ثابت دون التأثير على الخيوط الأخرى؟ هذا يصف طبيعة وظائف الإدارة."
+            hint: "تخيل خيوط نسيج متشابكة. هل يمكنك بسهولة فصل خيط واحد أو تتبع مساره بترتيب ثابت دون التأثير على الخيوط الأخرى؟ هذا يصف طبيعة وظائف الإدارة.",
+            arabicExplanation: "'متداخلة' تعني أن وظائف الإدارة مترابطة لدرجة أنه لا يمكن تحديد تسلسل دقيق وصارم لها. فهي تؤثر على بعضها البعض."
         },
         englishExplanation: "'Interwoven' implies that management functions are so interconnected that it's not possible to lay down an exact, rigid sequence for them. They influence each other."
     },
@@ -300,7 +313,8 @@ const quizData = [
                 'Bottom Management': "الإدارة الدنيا",
                 'All levels equally': "جميع المستويات بالتساوي"
             },
-            hint: "الإدارة العليا تضع الرؤية الكبرى، والإدارة الدنيا تنفذ المهام اليومية. أي مستوى إداري يقع في المنتصف ويعمل كجسر لترجمة الرؤية إلى خطط عمل؟"
+            hint: "الإدارة العليا تضع الرؤية الكبرى، والإدارة الدنيا تنفذ المهام اليومية. أي مستوى إداري يقع في المنتصف ويعمل كجسر لترجمة الرؤية إلى خطط عمل؟",
+            arabicExplanation: "الإدارة الوسطى (الرقابة الإدارية) مسؤولة عن أخذ الأهداف الاستراتيجية طويلة الأجل التي وضعتها الإدارة العليا وترجمتها إلى خطط تشغيلية محددة وقابلة للتنفيذ."
         },
         englishExplanation: "Middle Management (Management Control) is responsible for taking the long-term strategic goals set by Top Management and translating them into specific, actionable operational plans."
     },
@@ -318,7 +332,8 @@ const quizData = [
                 'Human Relations Movement': "حركة العلاقات الإنسانية",
                 'Systems Theory': "نظرية النظم"
             },
-            hint: "ركز هنري فايول على الوظائف والمبادئ الإدارية التي تنطبق على المنظمة ككل، مما وضع الأساس لما نعرفه اليوم بالإدارة الحديثة أو الإدارية."
+            hint: "ركز هنري فايول على الوظائف والمبادئ الإدارية التي تنطبق على المنظمة ككل، مما وضع الأساس لما نعرفه اليوم بالإدارة الحديثة أو الإدارية.",
+            arabicExplanation: "يعتبر هنري فايول أحد مؤسسي نظرية الإدارة الحديثة (المعروفة أيضًا باسم الإدارة الإدارية). ركز عمله على الوظائف الأساسية التي يؤديها المديرون."
         },
         englishExplanation: "Henri Fayol is considered a founder of Modern Management Theory (also known as Administrative Management). His work focused on the core functions that managers perform."
     },
@@ -336,7 +351,8 @@ const quizData = [
                 'Financial data only': "البيانات المالية فقط",
                 'External market research only': "أبحاث السوق الخارجية فقط"
             },
-            hint: "نظام المعلومات الإداري هو أكثر من مجرد تكنولوجيا. فكر في جميع المكونات التي تجعل النظام يعمل، بما في ذلك العنصر البشري والعمليات والبيانات نفسها."
+            hint: "نظام المعلومات الإداري هو أكثر من مجرد تكنولوجيا. فكر في جميع المكونات التي تجعل النظام يعمل، بما في ذلك العنصر البشري والعمليات والبيانات نفسها.",
+            arabicExplanation: "نظام المعلومات الإدارية (MIS) هو نظام شامل يضم الأشخاص والآلات (الأجهزة) والإجراءات (البرامج/العمليات) وقواعد البيانات/نماذج البيانات كعناصر أساسية له."
         },
         englishExplanation: "A Management Information System (MIS) is a comprehensive system that includes people, machines (hardware), procedures (software/processes), and databases/data models as its core elements."
     },
@@ -352,7 +368,8 @@ const quizData = [
                 'False': "خطأ",
                 'True': "صحيح"
             },
-            hint: "كلمة 'عالمي' تشير إلى الشمولية. هل تقتصر مبادئ التنظيم والتخطيط على نوع واحد فقط من المؤسسات؟"
+            hint: "كلمة 'عالمي' تشير إلى الشمولية. هل تقتصر مبادئ التنظيم والتخطيط على نوع واحد فقط من المؤسسات؟",
+            arabicExplanation: "خطأ. 'التطبيق العالمي' يعني أن مبادئ وتقنيات الإدارة قابلة للتطبيق بنفس القدر في مجالات مختلفة مثل الأعمال والتعليم والجيش والحكومة والمستشفيات، وليس فقط في الأعمال التجارية."
         },
         englishExplanation: "False. 'Universal Application' means that management principles and techniques are equally applicable in various fields like business, education, military, government, and hospitals, not just business."
     },
@@ -370,7 +387,8 @@ const quizData = [
                 'Top Management': "الإدارة العليا",
                 'The CEO': "الرئيس التنفيذي"
             },
-            hint: "أي مستوى إداري هو الأقرب إلى الموظفين الذين يقومون بالعمل اليومي؟ هذا المستوى يركز على الإشراف المباشر والتنفيذ."
+            hint: "أي مستوى إداري هو الأقرب إلى الموظفين الذين يقومون بالعمل اليومي؟ هذا المستوى يركز على الإشراف المباشر والتنفيذ.",
+            arabicExplanation: "تتكون الإدارة الدنيا (الرقابة التشغيلية) من المشرفين ومديري الخطوط الأمامية الذين تقع مسؤوليتهم الرئيسية على الإشراف المباشر على الموظفين وتنسيق المهام اليومية."
         },
         englishExplanation: "Bottom Management (Operational Control) consists of supervisors and front-line managers whose main responsibility is the direct supervision of employees and coordination of daily tasks."
     },
@@ -388,7 +406,8 @@ const quizData = [
                 'To hide information from managers': "إخفاء المعلومات عن المديرين",
                 'To increase risk': "زيادة المخاطر"
             },
-            hint: "عندما يكون لدى المدير معلومات دقيقة وموثوقة، هل يصبح أكثر أم أقل ثقة في قراراته؟ فكر في العلاقة بين المعلومات والثقة."
+            hint: "عندما يكون لدى المدير معلومات دقيقة وموثوقة، هل يصبح أكثر أم أقل ثقة في قراراته؟ فكر في العلاقة بين المعلومات والثقة.",
+            arabicExplanation: "يعد تقليل عدم اليقين وظيفة رئيسية للمعلومات. من خلال توفير بيانات موثوقة ودقيقة، يساعد نظام المعلومات الإدارية المديرين على اتخاذ قرارات أكثر ثقة ودقة، وبالتالي تقليل المخاطر."
         },
         englishExplanation: "Reducing uncertainty is a key function of information. By providing reliable and accurate data, an MIS helps managers make more confident and precise decisions, thereby lowering risk."
     },
@@ -404,7 +423,8 @@ const quizData = [
                 'False': "خطأ",
                 'True': "صحيح"
             },
-            hint: "فكر في نظام مثل جسم الإنسان أو محرك السيارة. هل تعمل أجزاؤه بشكل مستقل ومنفصل، أم أنها مترابطة وتعمل معًا لتحقيق هدف مشترك؟"
+            hint: "فكر في نظام مثل جسم الإنسان أو محرك السيارة. هل تعمل أجزاؤه بشكل مستقل ومنفصل، أم أنها مترابطة وتعمل معًا لتحقيق هدف مشترك؟",
+            arabicExplanation: "خطأ. يُعرَّف النظام بأنه مجموعة من المكونات المترابطة التي تعمل معًا لتحقيق هدف مشترك. مكوناته مرتبطة وليست غير مترابطة."
         },
         englishExplanation: "False. A system is defined as a set of interrelated components that work together to achieve a common goal. Its components are linked, not unrelated."
     },
@@ -422,7 +442,8 @@ const quizData = [
                 'Peter F. Drucker': "بيتر ف. دراكر",
                 'George R. Terry': "جورج ر. تيري"
             },
-            hint: "هذا المنظّر ركز على الجانب الإنساني في الإدارة، معتقدًا أن تمكين الموظفين وتشجيع مشاركتهم هو مفتاح النجاح التنظيمي."
+            hint: "هذا المنظّر ركز على الجانب الإنساني في الإدارة، معتقدًا أن تمكين الموظفين وتشجيع مشاركتهم هو مفتاح النجاح التنظيمي.",
+            arabicExplanation: "كان أوردواي تيد منظّرًا تنظيميًا ومربيًا ركز على العلاقات الإنسانية والمسؤولية الاجتماعية. كان يعتقد أن الإدارة يجب أن تمكّن الناس وتشجع المشاركة."
         },
         englishExplanation: "Ordway Tead was an organizational theorist and educator who focused on human relations and social responsibility. He believed management should empower people and encourage participation."
     },
@@ -440,7 +461,8 @@ const quizData = [
                 'It is only taught in business schools': "أنه يدرس فقط في كليات إدارة الأعمال",
                 'It has no connection to other fields of study': "أنه لا علاقة له بمجالات الدراسة الأخرى"
             },
-            hint: "كلمة 'متعدد' تشير إلى الكثرة والتنوع. كيف ينطبق هذا على مصادر المعرفة التي تعتمد عليها الإدارة لفهم السلوك البشري والعمليات والإنتاجية؟"
+            hint: "كلمة 'متعدد' تشير إلى الكثرة والتنوع. كيف ينطبق هذا على مصادر المعرفة التي تعتمد عليها الإدارة لفهم السلوك البشري والعمليات والإنتاجية؟",
+            arabicExplanation: "كموضوع متعدد التخصصات، نمت الإدارة من خلال دمج المعرفة والإلهام من العديد من التخصصات الأخرى، مثل الهندسة وعلم الاجتماع وعلم النفس والأنثروبولوجيا."
         },
         englishExplanation: "As a multi-disciplinary subject, management has grown by incorporating knowledge and inspiration from many other disciplines, such as engineering, sociology, psychology, and anthropology."
     },
@@ -456,7 +478,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "فكر فيمن يضع الرؤية طويلة الأمد ويحدد الاتجاه العام للمنظمة بأكملها. هل هذه مهمة المشرفين اليوميين أم القادة في قمة الهرم التنظيمي؟"
+            hint: "فكر فيمن يضع الرؤية طويلة الأمد ويحدد الاتجاه العام للمنظمة بأكملها. هل هذه مهمة المشرفين اليوميين أم القادة في قمة الهرم التنظيمي؟",
+            arabicExplanation: "صحيح. الإدارة العليا مسؤولة عن الإدارة الاستراتيجية، والتي تتضمن تحديد الأهداف طويلة الأجل، وتحديد الاستراتيجيات الشاملة، واتخاذ القرارات الرئيسية التي تؤثر على المنظمة بأكملها."
         },
         englishExplanation: "True. Top Management is responsible for Strategic Management, which involves setting long-term goals, defining overall strategies, and making major decisions that affect the entire organization."
     },
@@ -474,7 +497,8 @@ const quizData = [
                 'The company\'s IT system': "نظام تكنولوجيا المعلومات في الشركة",
                 'A lack of clear leadership': "نقص في القيادة الواضحة"
             },
-            hint: "كل منظمة لديها هيكل يحدد من يقدم التقارير لمن. هذا الهيكل يخلق سلسلة من القيادة والتحكم من الأعلى إلى الأسفل."
+            hint: "كل منظمة لديها هيكل يحدد من يقدم التقارير لمن. هذا الهيكل يخلق سلسلة من القيادة والتحكم من الأعلى إلى الأسفل.",
+            arabicExplanation: "يصف 'نظام السلطة' الإدارة بأنها تسلسل هرمي للقيادة والتحكم، حيث يمتلك المديرون في مستويات مختلفة درجات متفاوتة من السلطة لأداء وظائفهم بفعالية."
         },
         englishExplanation: "The 'System of Authority' describes management as a hierarchy of command and control, where managers at different levels possess varying degrees of authority to perform their functions effectively."
     },
@@ -492,7 +516,8 @@ const quizData = [
                 'System of Authority': "نظام السلطة",
                 'Economic Resource': "المورد الاقتصادي"
             },
-            hint: "هذا المصطلح يصف الإدارة ليس كعملية أو حاجة، بل ككيان أو مؤسسة قائمة بحد ذاتها في المجتمع."
+            hint: "هذا المصطلح يصف الإدارة ليس كعملية أو حاجة، بل ككيان أو مؤسسة قائمة بحد ذاتها في المجتمع.",
+            arabicExplanation: "يشير مصطلح 'وجود الإدارة' إلى حقيقة أن الإدارة هي مؤسسة اجتماعية مميزة لا غنى عنها تمكّن من النشاط المنظم."
         },
         englishExplanation: "The term 'Existence of Management' refers to the fact that management is a distinct and indispensable social institution that enables organized activity."
     },
@@ -508,7 +533,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "هذا المفكر ركز على الجانب العملي والقيادي في قمة المنظمة، معتبرًا أن جوهر الإدارة هو اتخاذ القرارات وتوجيه الآخرين لتنفيذها."
+            hint: "هذا المفكر ركز على الجانب العملي والقيادي في قمة المنظمة، معتبرًا أن جوهر الإدارة هو اتخاذ القرارات وتوجيه الآخرين لتنفيذها.",
+            arabicExplanation: "صحيح. عرّف رالف سي. ديفيس، وهو كاتب وباحث في الإدارة، الإدارة بأنها وظيفة القيادة التنفيذية، مع التركيز على التوجيه وصنع القرار."
         },
         englishExplanation: "True. Ralph C. Davis, a management writer and scholar, defined management as the function of executive leadership, with a focus on directing and decision-making."
     },
@@ -526,7 +552,8 @@ const quizData = [
                 'Only for large corporations': "فقط الشركات الكبيرة",
                 'Only for government agencies': "فقط الوكالات الحكومية"
             },
-            hint: "النص يؤكد على أن أهمية الإدارة تتجاوز عالم الأعمال التقليدي. ابحث عن الخيار الذي يعكس هذا التنوع الواسع."
+            hint: "النص يؤكد على أن أهمية الإدارة تتجاوز عالم الأعمال التقليدي. ابحث عن الخيار الذي يعكس هذا التنوع الواسع.",
+            arabicExplanation: "ينص النص صراحة على أن 'الإدارة ضرورية ليس فقط للشركات التجارية ولكن أيضًا للمستشفيات والفنادق والهيئات الدينية والصناديق الخيرية إلخ...'"
         },
         englishExplanation: "The text explicitly states that 'Management is Essential not Only for Business Concerns but also for Hospitals, Hotels, Religious, Bodies, Charitable Trust etc...'"
     },
@@ -544,7 +571,8 @@ const quizData = [
                 'A sudden system crash': "تعطل مفاجئ في النظام",
                 'A planned event': "حدث مخطط له"
             },
-            hint: "المعلومات القيمة لا تؤكد فقط ما نعرفه بالفعل. أحيانًا، تكون أكثر قيمة عندما تكشف عن شيء جديد تمامًا أو غير متوقع."
+            hint: "المعلومات القيمة لا تؤكد فقط ما نعرفه بالفعل. أحيانًا، تكون أكثر قيمة عندما تكشف عن شيء جديد تمامًا أو غير متوقع.",
+            arabicExplanation: "'عنصر المفاجأة' في المعلومات هو القدرة على توفير بيانات غير متوقعة للمدير، مما قد يؤدي إلى تغييرات في القرارات أو الاستراتيجيات."
         },
         englishExplanation: "The 'Element of Surprise' in information is the ability to provide unexpected data to a manager, which can potentially lead to changes in decisions or strategies."
     },
@@ -562,7 +590,8 @@ const quizData = [
                 'Focus solely on financial integration': "التركيز فقط على التكامل المالي",
                 'Use of force to manage employees': "استخدام القوة لإدارة الموظفين"
             },
-            hint: "كلمة 'تكامل' تعني الجمع بين أجزاء مختلفة لتكوين كل واحد متناغم. كيف ينطبق هذا على دور الإدارة في التعامل مع الموظفين والمواد والمعدات؟"
+            hint: "كلمة 'تكامل' تعني الجمع بين أجزاء مختلفة لتكوين كل واحد متناغم. كيف ينطبق هذا على دور الإدارة في التعامل مع الموظفين والمواد والمعدات؟",
+            arabicExplanation: "تُبرز خاصية 'القوة التكاملية' أن جوهر الإدارة هو تكامل الموارد البشرية وغير البشرية لتحقيق الأهداف التنظيمية المرجوة."
         },
         englishExplanation: "The 'Integrative Force' characteristic highlights that the essence of management is the integration of human and non-human resources to achieve the desired organizational objectives."
     },
@@ -578,7 +607,8 @@ const quizData = [
                 'False': "خطأ",
                 'True': "صحيح"
             },
-            hint: "هل يمكن تطبيق نفس المبادئ بنفس الصرامة في مستشفى وفي مصنع سيارات؟ فكر فيما إذا كانت المبادئ الإدارية يجب أن تكون مرنة أم جامدة لتكون فعالة."
+            hint: "هل يمكن تطبيق نفس المبادئ بنفس الصرامة في مستشفى وفي مصنع سيارات؟ فكر فيما إذا كانت المبادئ الإدارية يجب أن تكون مرنة أم جامدة لتكون فعالة.",
+            arabicExplanation: "خطأ. اقترح هنري فايول أن مبادئ الإدارة هي مبادئ توجيهية عملية مرنة وقادرة على التكيف مع كل موقف. فهي ليست قواعد صارمة وغير مرنة."
         },
         englishExplanation: "False. Henri Fayol suggested that management principles are working guidelines which are flexible and capable of adaptation to every situation. They are not rigid, inflexible rules."
     },
@@ -596,7 +626,8 @@ const quizData = [
                 'Strict adherence to company rules': "الالتزام الصارم بقواعد الشركة",
                 'A military-style organization': "منظمة على الطراز العسكري"
             },
-            hint: "عندما نقول أن الإدارة تستفيد من علم النفس وعلم الاجتماع، فإننا نشير إلى هذه المجالات كـ...'أكاديمية'."
+            hint: "عندما نقول أن الإدارة تستفيد من علم النفس وعلم الاجتماع، فإننا نشير إلى هذه المجالات كـ...'أكاديمية'.",
+            arabicExplanation: "في سياق 'موضوع متعدد التخصصات'، تشير كلمة 'تخصص' إلى مجال دراسة أو فرع من المعرفة، مثل الهندسة أو الأنثروبولوجيا أو علم النفس."
         },
         englishExplanation: "In the context of 'Multi-Disciplinary Subject', the word 'discipline' refers to a field of study or a branch of knowledge, such as engineering, anthropology, or psychology."
     },
@@ -614,7 +645,8 @@ const quizData = [
                 'Stays the same': "تبقى كما هي",
                 'Becomes irrelevant': "تصبح غير ذات صلة"
             },
-            hint: "فكر في الهرم التنظيمي. هل السلطة تتركز في القاعدة الواسعة أم في القمة الضيقة؟"
+            hint: "فكر في الهرم التنظيمي. هل السلطة تتركز في القاعدة الواسعة أم في القمة الضيقة؟",
+            arabicExplanation: "بشكل عام، كلما نزلنا في التسلسل الهرمي الإداري، من الإدارة العليا إلى الإدارة الدنيا، تقل درجة السلطة تدريجيًا."
         },
         englishExplanation: "Generally, as we move down in the managerial hierarchy, from top management to bottom management, the degree of authority gradually reduces."
     },
@@ -632,7 +664,8 @@ const quizData = [
                 'Being profitable': "أن يكون مربحًا",
                 'Being popular': "أن يكون شائعًا"
             },
-            hint: "النشاط الهادف ليس عشوائيًا أو بلا معنى. إنه مدفوع بنية واضحة لتحقيق شيء محدد."
+            hint: "النشاط الهادف ليس عشوائيًا أو بلا معنى. إنه مدفوع بنية واضحة لتحقيق شيء محدد.",
+            arabicExplanation: "في هذا السياق، يعني 'هادف' وجود هدف أو غاية محددة. الإدارة نشاط هادف لأنها ليست عشوائية؛ فهي موجهة نحو تحقيق أهداف محددة."
         },
         englishExplanation: "In this context, 'Purposeful' means having a specific goal or aim. Management is a purposeful activity because it is not random; it is directed toward achieving defined objectives."
     },
@@ -648,7 +681,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "عندما نقول أن مبادئ الإدارة 'عالمية'، فإننا نعني أنها... في مجموعة متنوعة من المنظمات."
+            hint: "عندما نقول أن مبادئ الإدارة 'عالمية'، فإننا نعني أنها... في مجموعة متنوعة من المنظمات.",
+            arabicExplanation: "صحيح. 'قابل للتطبيق' يعني أن شيئًا ما ملائم أو مناسب ويمكن وضعه موضع التنفيذ في مواقف مختلفة، وهي سمة رئيسية لمبادئ الإدارة العالمية."
         },
         englishExplanation: "True. 'Applicable' means that something is relevant or appropriate and can be put into practice in various situations, which is a key feature of universal management principles."
     },
@@ -664,7 +698,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "ارجع إلى الرسم البياني للتسلسل الهرمي الإداري. ما هو المصطلح المستخدم لوصف المستوى الموجود بين الإدارة العليا والإدارة التشغيلية؟"
+            hint: "ارجع إلى الرسم البياني للتسلسل الهرمي الإداري. ما هو المصطلح المستخدم لوصف المستوى الموجود بين الإدارة العليا والإدارة التشغيلية؟",
+            arabicExplanation: "صحيح. يصف مخطط التسلسل الهرمي الإداري المقدم صراحةً المستوى الأوسط بأنه 'الرقابة الإدارية (الإدارة الوسطى)'."
         },
         englishExplanation: "True. The provided management hierarchy diagram explicitly labels the middle tier as 'management control (middle management)'."
     },
@@ -680,7 +715,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "لكي تعمل الإدارة بفعالية كنشاط 'موجه نحو الهدف'، ما هو الشرط الأساسي المتعلق بالأهداف نفسها؟"
+            hint: "لكي تعمل الإدارة بفعالية كنشاط 'موجه نحو الهدف'، ما هو الشرط الأساسي المتعلق بالأهداف نفسها؟",
+            arabicExplanation: "صحيح. ينص النص على أنه 'من الضروري أن تكون أهداف المنظمة محددة جيدًا ومفهومة بشكل صحيح من قبل الإدارة على مختلف المستويات' لكي تكون الإدارة ناجحة."
         },
         englishExplanation: "True. The text states it is 'imperative that the organizational goals must be well-defined and properly understood by the management at various levels' for management to be successful."
     },
@@ -696,7 +732,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "لكي يقدم نظام المعلومات رؤية شاملة، هل يجب أن يقتصر على البيانات الموجودة داخل الشركة فقط، أم يجب أن يأخذ في الاعتبار أيضًا عوامل السوق والمنافسين؟"
+            hint: "لكي يقدم نظام المعلومات رؤية شاملة، هل يجب أن يقتصر على البيانات الموجودة داخل الشركة فقط، أم يجب أن يأخذ في الاعتبار أيضًا عوامل السوق والمنافسين؟",
+            arabicExplanation: "صحيح. ينص النص على أن 'النظام يجمع البيانات من المصادر الداخلية والخارجية للمنظمة'."
         },
         englishExplanation: "True. The text states, 'The system gathers data from the internal and external sources of an organization.'"
     },
@@ -714,7 +751,8 @@ const quizData = [
                 'Peter F. Drucker': "بيتر ف. دراكر",
                 'George R. Terry': "جورج ر. تيري"
             },
-            hint: "هذا المفكر ركز على الجانب التنفيذي للإدارة، معتبرًا أن القيادة وصنع القرار هما جوهر العملية الإدارية."
+            hint: "هذا المفكر ركز على الجانب التنفيذي للإدارة، معتبرًا أن القيادة وصنع القرار هما جوهر العملية الإدارية.",
+            arabicExplanation: "يُوصف رالف سي. ديفيس في النص بأنه كاتب وباحث إداري 'موجز وموجه نحو القيادة'."
         },
         englishExplanation: "Ralph C. Davis is described in the text as a 'concise and leadership-oriented' management writer and scholar."
     },
@@ -732,7 +770,8 @@ const quizData = [
                 'Economic Resource': "المورد الاقتصادي",
                 'Distinct Process': "العملية المميزة"
             },
-            hint: "فكر في الدور الذي تلعبه الإدارة في الجمع بين الموظفين (بأهدافهم الشخصية) وأهداف الشركة لضمان عمل الجميع معًا بسلاسة."
+            hint: "فكر في الدور الذي تلعبه الإدارة في الجمع بين الموظفين (بأهدافهم الشخصية) وأهداف الشركة لضمان عمل الجميع معًا بسلاسة.",
+            arabicExplanation: "ينص النص على أنه كـ 'قوة تكاملية'، يسعى المديرون إلى 'مواءمة أهداف الأفراد مع الأهداف التنظيمية من أجل سير العمل بسلاسة في المنظمة'."
         },
         englishExplanation: "The text states that as an 'Integrative Force', managers 'seek to harmonize the individuals' goals with the organizational goals for the smooth working of the organization.'"
     },
@@ -750,7 +789,8 @@ const quizData = [
                 '5': "5",
                 '20': "20"
             },
-            hint: "طور فايول مجموعة شاملة من المبادئ التي لا تزال تؤثر في الإدارة اليوم. الرقم هو عدد زوجي معروف في أدبيات الإدارة."
+            hint: "طور فايول مجموعة شاملة من المبادئ التي لا تزال تؤثر في الإدارة اليوم. الرقم هو عدد زوجي معروف في أدبيات الإدارة.",
+            arabicExplanation: "يشتهر هنري فايول بتطوير 14 مبدأً للإدارة كان لها تأثير كبير على الممارسات الإدارية الحديثة."
         },
         englishExplanation: "Henri Fayol is famous for developing 14 principles of management that have had a significant impact on modern administrative practices."
     },
@@ -766,7 +806,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "عندما تكون المهمة معقدة وتتطلب تنسيقًا كبيرًا، هل تزداد أم تقل أهمية وجود قائد لاتخاذ القرارات وتوجيه الفريق؟"
+            hint: "عندما تكون المهمة معقدة وتتطلب تنسيقًا كبيرًا، هل تزداد أم تقل أهمية وجود قائد لاتخاذ القرارات وتوجيه الفريق؟",
+            arabicExplanation: "صحيح. يعرّف النص 'المهمة الصعبة' بأنها مهمة تتطلب مهارة عالية وتنسيقًا وموارد محدودة، مما 'يسلط الضوء على الحاجة إلى القيادة وصنع القرار'."
         },
         englishExplanation: "True. The text defines a 'Difficult Task' as an assignment requiring high skill, coordination, and limited resources, which 'highlights the need for leadership and decision-making.'"
     },
@@ -784,7 +825,8 @@ const quizData = [
                 'Financial Control': "الرقابة المالية",
                 'Quality Control': "مراقبة الجودة"
             },
-            hint: "هذا المستوى من الإدارة يركز على المهام اليومية والعمليات. أي من الخيارات يصف بشكل أفضل هذا التركيز؟"
+            hint: "هذا المستوى من الإدارة يركز على المهام اليومية والعمليات. أي من الخيارات يصف بشكل أفضل هذا التركيز؟",
+            arabicExplanation: "يصف مخطط التسلسل الهرمي الإداري صراحةً المستوى الأدنى بأنه 'الرقابة التشغيلية (الإدارة الدنيا)'."
         },
         englishExplanation: "The management hierarchy diagram explicitly labels the bottom tier as 'operational control (bottom management)'."
     },
@@ -802,7 +844,8 @@ const quizData = [
                 'Marketing and sales': "التسويق والمبيعات",
                 'Product development': "تطوير المنتج"
             },
-            hint: "كلمة 'Staff' باللغة الإنجليزية تشير إلى الموظفين أو فريق العمل. أي من الخيارات يتعلق بإدارة هذا الفريق؟"
+            hint: "كلمة 'Staff' باللغة الإنجليزية تشير إلى الموظفين أو فريق العمل. أي من الخيارات يتعلق بإدارة هذا الفريق؟",
+            arabicExplanation: "التوظيف هو وظيفة إدارية أساسية تتضمن عملية اختيار وتعيين وتدريب الموظفين لشغل الأدوار داخل المنظمة."
         },
         englishExplanation: "Staffing is a core management function that involves the process of selecting, appointing, and training employees to fill roles within the organization."
     },
@@ -820,7 +863,8 @@ const quizData = [
                 'Psychology': "علم النفس",
                 'Engineering': "الهندسة"
             },
-            hint: "هذا التخصص العلمي يساعد المديرين على فهم كيفية تأثير الثقافة على السلوك التنظيمي."
+            hint: "هذا التخصص العلمي يساعد المديرين على فهم كيفية تأثير الثقافة على السلوك التنظيمي.",
+            arabicExplanation: "الأنثروبولوجيا هي الدراسة العلمية للإنسانية، وتهتم بالسلوك البشري والبيولوجيا البشرية والثقافات والمجتمعات، في الحاضر والماضي."
         },
         englishExplanation: "Anthropology is the scientific study of humanity, concerned with human behavior, human biology, cultures, and societies, in both the present and past."
     },
@@ -836,7 +880,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "هذا المفكر قدم شرحًا منظمًا للإدارة من خلال وظائفها الرئيسية. هل يتوافق هذا مع كونه شخصًا منطقيًا ويركز على العمليات؟"
+            hint: "هذا المفكر قدم شرحًا منظمًا للإدارة من خلال وظائفها الرئيسية. هل يتوافق هذا مع كونه شخصًا منطقيًا ويركز على العمليات؟",
+            arabicExplanation: "صحيح. يصف النص شخصية جورج ر. تيري بأنه 'أكاديمي ومؤلف كتب دراسية، منطقي وموجه نحو العمليات'."
         },
         englishExplanation: "True. The text describes George R. Terry's personality as 'Academic and textbook author, logical and process-oriented'."
     },
@@ -854,7 +899,8 @@ const quizData = [
                 'Employee bonuses': "مكافآت الموظفين",
                 'Raw materials': "مواد خام"
             },
-            hint: "الإدارة ليست هي الموارد نفسها، بل هي العملية التي تحول هذه الموارد إلى شيء ذي قيمة. ما هو المصطلح العام لهذا الشيء المنتج؟"
+            hint: "الإدارة ليست هي الموارد نفسها، بل هي العملية التي تحول هذه الموارد إلى شيء ذي قيمة. ما هو المصطلح العام لهذا الشيء المنتج؟",
+            arabicExplanation: "يشرح النص 'الحاجة إلى الإدارة' على أنها المبرر لكون الإدارة ضرورية 'لتحويل الموارد إلى مخرجات إنتاجية'."
         },
         englishExplanation: "The text explains 'The Need of Management' as the justification for why management is necessary 'to convert resources into productive outputs.'"
     },
@@ -872,7 +918,8 @@ const quizData = [
                 'Organizing': "التنظيم",
                 'Directing': "التوجيه"
             },
-            hint: "هذه الوظيفة تتضمن المقارنة بين ما تم التخطيط له وما تم إنجازه بالفعل، واتخاذ الإجراءات التصحيحية اللازمة."
+            hint: "هذه الوظيفة تتضمن المقارنة بين ما تم التخطيط له وما تم إنجازه بالفعل، واتخاذ الإجراءات التصحيحية اللازمة.",
+            arabicExplanation: "'الرقابة' هي وظيفة الإدارة التي تتضمن مراقبة الأداء ومقارنته بالأهداف واتخاذ الإجراءات التصحيحية حسب الحاجة."
         },
         englishExplanation: "'Controlling' is the management function that involves monitoring performance, comparing it with goals, and taking corrective action as needed."
     },
@@ -890,7 +937,8 @@ const quizData = [
                 'The Human Problems of an Industrial Civilization': "المشاكل الإنسانية للحضارة الصناعية",
                 'The Practice of Management': "ممارسة الإدارة"
             },
-            hint: "عنوان الكتاب يعكس تركيز فايول على تطبيق مبادئ الإدارة ليس فقط في المصانع ولكن في جميع أنواع المنظمات."
+            hint: "عنوان الكتاب يعكس تركيز فايول على تطبيق مبادئ الإدارة ليس فقط في المصانع ولكن في جميع أنواع المنظمات.",
+            arabicExplanation: "عنوان عمل هنري فايول الأساسي، الذي نُشر عام 1916، هو 'Administration Industrielle et Générale'، والذي يُترجم إلى 'الإدارة الصناعية والعامة'."
         },
         englishExplanation: "Henri Fayol's seminal work, published in 1916, is titled 'Administration Industrielle et Générale', which translates to 'Industrial and General Administration'."
     },
@@ -908,7 +956,8 @@ const quizData = [
                 'Complex and interwoven': "معقد ومتداخل",
                 'Purposeful and planned': "هادف ومخطط له"
             },
-            hint: "عندما نقول إن الإدارة عملية 'مميزة'، فإننا نعني أنها تختلف عن الوظائف الأخرى في المنظمة مثل المحاسبة أو التسويق."
+            hint: "عندما نقول إن الإدارة عملية 'مميزة'، فإننا نعني أنها تختلف عن الوظائف الأخرى في المنظمة مثل المحاسبة أو التسويق.",
+            arabicExplanation: "يعني مصطلح 'مميز' أنه مختلف بشكل ملحوظ في طبيعته عن شيء آخر من نوع مشابه. يستخدم النص هذا المصطلح لوصف الإدارة كعملية فريدة."
         },
         englishExplanation: "The term 'Distinct' means recognizably different in nature from something else of a similar type. The text uses it to describe management as a unique process."
     },
@@ -924,7 +973,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "هل يجب أن تكون القواعد الإدارية قابلة للتكيف مع المواقف المختلفة، أم يجب أن تكون صارمة وغير قابلة للتغيير؟ فكر في رأي فايول حول هذا الموضوع."
+            hint: "هل يجب أن تكون القواعد الإدارية قابلة للتكيف مع المواقف المختلفة، أم يجب أن تكون صارمة وغير قابلة للتغيير؟ فكر في رأي فايول حول هذا الموضوع.",
+            arabicExplanation: "صحيح. يؤكد النص أن فايول رأى مبادئ الإدارة على أنها 'العمل بمبادئ توجيهية مرنة وقادرة على التكيف مع كل منظمة'."
         },
         englishExplanation: "True. The text emphasizes that Fayol saw management principles as 'working with guidelines which are flexible and capable of adaptation to every organization.'"
     },
@@ -942,7 +992,8 @@ const quizData = [
                 'Bottom Management': "الإدارة الدنيا",
                 'Non-managerial staff': "الموظفون غير الإداريين"
             },
-            hint: "هؤلاء المديرون يعملون كجسر بين الإدارة العليا التي تضع الاستراتيجيات والإدارة الدنيا التي تشرف على العمليات اليومية."
+            hint: "هؤلاء المديرون يعملون كجسر بين الإدارة العليا التي تضع الاستراتيجيات والإدارة الدنيا التي تشرف على العمليات اليومية.",
+            arabicExplanation: "رؤساء الأقسام ومديرو الإدارات هم أمثلة كلاسيكية للإدارة الوسطى. وهم مسؤولون عن تنفيذ الخطط الاستراتيجية التي يضعها كبار المديرين."
         },
         englishExplanation: "Department heads and division chiefs are classic examples of Middle Management. They are responsible for implementing the strategic plans developed by top managers."
     },
@@ -960,7 +1011,8 @@ const quizData = [
                 'profits and shareholders': "الأرباح والمساهمين",
                 'technology and innovation': "التكنولوجيا والابتكار"
             },
-            hint: "ركز دراكر على الجانب الإنساني والهدف النهائي للإدارة. ما هما أهم عنصرين في هذا النهج؟"
+            hint: "ركز دراكر على الجانب الإنساني والهدف النهائي للإدارة. ما هما أهم عنصرين في هذا النهج؟",
+            arabicExplanation: "يصف النص شخصية بيتر ف. دراكر بأنه 'معروف بكونه عمليًا، وصاحب رؤية، ومركّزًا على الأشخاص والنتائج'."
         },
         englishExplanation: "The text describes Peter F. Drucker's personality as 'Known for being practical, visionary, and focused on people and results.'"
     },
@@ -976,7 +1028,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "بعد التخطيط والتنظيم، تحتاج الإدارة إلى التأكد من أن الموظفين يعملون بفعالية نحو الأهداف المحددة. هذه الوظيفة تتعلق بالقيادة والتواصل."
+            hint: "بعد التخطيط والتنظيم، تحتاج الإدارة إلى التأكد من أن الموظفين يعملون بفعالية نحو الأهداف المحددة. هذه الوظيفة تتعلق بالقيادة والتواصل.",
+            arabicExplanation: "صحيح. التوجيه (أو التنفيذ) هو وظيفة الإدارة التي تتضمن قيادة الموظفين والتأثير عليهم وتحفيزهم لأداء المهام الأساسية."
         },
         englishExplanation: "True. Directing (or Actuating) is the management function that involves leading, influencing, and motivating employees to perform the essential tasks."
     },
@@ -992,7 +1045,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "يعرّف النص النظام بأنه يتكون من مدخلات تتم معالجتها لتحقيق مخرجات. هل ينطبق هذا التعريف على نظام المعلومات الإداري الذي يأخذ البيانات الخام (مدخلات) ويحولها إلى تقارير (مخرجات)؟"
+            hint: "يعرّف النص النظام بأنه يتكون من مدخلات تتم معالجتها لتحقيق مخرجات. هل ينطبق هذا التعريف على نظام المعلومات الإداري الذي يأخذ البيانات الخام (مدخلات) ويحولها إلى تقارير (مخرجات)؟",
+            arabicExplanation: "صحيح. يعرّف النص النظام بأنه يتكون من 'مدخلات تتم معالجتها لتحقيق مخرجات محددة'. يناسب نظام المعلومات الإداري هذا التعريف تمامًا، حيث يعالج البيانات الخام (مدخلات) إلى معلومات ذات معنى (مخرجات)."
         },
         englishExplanation: "True. The text defines a system as consisting of 'inputs that are processed to achieve specific outputs.' An MIS fits this definition perfectly, processing raw data (input) into meaningful information (output)."
     },
@@ -1010,7 +1064,8 @@ const quizData = [
                 'Anthropology': "الأنثروبولوجيا",
                 'Biology': "علم الأحياء"
             },
-            hint: "يساعد هذا العلم المديرين على فهم ديناميكيات المجموعات والهياكل الاجتماعية داخل المنظمات وخارجها."
+            hint: "يساعد هذا العلم المديرين على فهم ديناميكيات المجموعات والهياكل الاجتماعية داخل المنظمات وخارجها.",
+            arabicExplanation: "علم الاجتماع هو دراسة الحياة الاجتماعية والتغيير الاجتماعي والأسباب والنتائج الاجتماعية للسلوك البشري. وهو أحد التخصصات التي تساهم في علم الإدارة."
         },
         englishExplanation: "Sociology is the study of social life, social change, and the social causes and consequences of human behavior. It is one of the disciplines that contributes to management science."
     },
@@ -1028,7 +1083,8 @@ const quizData = [
                 'A university or college': "جامعة أو كلية",
                 'A government building': "مبنى حكومي"
             },
-            hint: "عندما يوصف شيء بأنه 'مؤسسة'، فهذا يعني أنه جزء أساسي ومعترف به من المجتمع، وليس مجرد كيان مادي."
+            hint: "عندما يوصف شيء بأنه 'مؤسسة'، فهذا يعني أنه جزء أساسي ومعترف به من المجتمع، وليس مجرد كيان مادي.",
+            arabicExplanation: "في هذا السياق، تشير 'المؤسسة' إلى هيكل اجتماعي أو منظمة قائمة. يحدد النص الإدارة كمؤسسة اجتماعية مميزة لا غنى عنها."
         },
         englishExplanation: "In this context, an 'Institution' refers to an established social structure or organization. The text identifies management as a distinct and indispensable social institution."
     },
@@ -1046,7 +1102,8 @@ const quizData = [
                 'Administrative Management': "الإدارة الإدارية",
                 'Bureaucratic Management': "الإدارة البيروقراطية"
             },
-            hint: "ركزت هذه المدرسة الفكرية على الجوانب النفسية والاجتماعية للعمل، مؤكدة على أن رضا الموظفين وتحفيزهم يؤدي إلى إنتاجية أعلى."
+            hint: "ركزت هذه المدرسة الفكرية على الجوانب النفسية والاجتماعية للعمل، مؤكدة على أن رضا الموظفين وتحفيزهم يؤدي إلى إنتاجية أعلى.",
+            arabicExplanation: "كان أوردواي تيد منظّرًا تنظيميًا يركز على العلاقات الإنسانية. إن تركيزه على تمكين الناس وتشجيع المشاركة والعمل الجماعي هي من سمات مدرسة العلاقات الإنسانية الفكرية."
         },
         englishExplanation: "Ordway Tead was an organizational theorist focused on human relations. His emphasis on empowering people, encouraging participation, and teamwork are hallmarks of the Human Relations school of thought."
     },
@@ -1062,7 +1119,8 @@ const quizData = [
                 'True': "صحيح",
                 'False': "خطأ"
             },
-            hint: "عندما يطبق المديرون مبادئ الإدارة، فإنهم يعتمدون على مجموعة من الأصول غير الملموسة التي اكتسبوها. ما هو المصطلح الذي يصف هذه الأصول؟"
+            hint: "عندما يطبق المديرون مبادئ الإدارة، فإنهم يعتمدون على مجموعة من الأصول غير الملموسة التي اكتسبوها. ما هو المصطلح الذي يصف هذه الأصول؟",
+            arabicExplanation: "صحيح. في سياق 'القوة التكاملية'، يذكر النص أن 'المديرين يطبقون المعرفة والخبرة ومبادئ الإدارة' للحصول على النتائج. تشمل المعرفة هنا المعلومات والفهم والخبرة."
         },
         englishExplanation: "True. In the context of the 'Integrative Force', the text mentions that 'Managers apply knowledge, experience and management principles' to get results. Knowledge here encompasses information, understanding, and expertise."
     }
@@ -1080,27 +1138,20 @@ const shuffleArray = (array) => {
 
 // --- FROM components/ProgressBar.tsx ---
 const ProgressBar = ({ current, total }) => {
-  const percentage = (current / total) * 100;
+  const percentage = total > 0 ? (current / total) * 100 : 0;
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-2">
-        <p className="text-sm font-semibold" style={{ color: 'var(--muted-foreground)' }}>
-          السؤال {current} من {total}
-        </p>
-      </div>
-      <div className="w-full rounded-full h-3" style={{ backgroundColor: 'var(--muted)'}}>
-        <div
-          className="h-full rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${percentage}%`, backgroundColor: 'var(--accent-theme)' }}
-        ></div>
-      </div>
+    <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--accent)'}}>
+      <div
+        className="h-full rounded-full transition-all duration-500 ease-out"
+        style={{ width: `${percentage}%`, backgroundColor: 'var(--accent-theme)' }}
+      ></div>
     </div>
   );
 };
 
 // --- FROM components/ExplanationWidget.tsx ---
 const CloseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
@@ -1152,7 +1203,7 @@ const ExplanationWidget = ({ isOpen, onClose, translation }) => {
                 >
                     <CloseIcon />
                 </button>
-                <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--accent-theme)' }}>ترجمة وتلميح</h3>
+                <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--accent-theme)' }}>ترجمة وتوضيح</h3>
                 <div 
                     className="max-w-none max-h-[60vh] overflow-y-auto text-base leading-relaxed pr-2 space-y-4" 
                     style={{ color: 'var(--foreground)'}}
@@ -1175,67 +1226,97 @@ const ExplanationWidget = ({ isOpen, onClose, translation }) => {
                         <p className="font-bold">تلميح:</p>
                         <p>{translation.hint}</p>
                     </div>
+                    {translation.arabicExplanation && (
+                        <div>
+                            <p className="font-bold">شرح الإجابة:</p>
+                            <p>{translation.arabicExplanation}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-
 // --- FROM components/BatchResultCard.tsx ---
-const BatchResultCard = ({ score, total, onContinue, batchAnswers }) => {
+const BatchResultCard = ({ score, total, onContinue, batchAnswers, onShowExplanation }) => {
     return (
-        <div className="text-center p-2 sm:p-4 w-full flex flex-col items-center h-full">
-            <div className="flex-shrink-0">
-                <h2 className="text-3xl font-bold mb-2">Batch Complete!</h2>
-                <p className="text-xl mb-4" style={{ color: 'var(--muted-foreground)' }}>
-                    Your score for this section: <strong className="font-bold" style={{ color: 'var(--foreground)' }}>{score}</strong> out of <strong style={{ color: 'var(--foreground)' }}>{total}</strong>
-                </p>
-                <h3 className="text-lg font-semibold mb-2 flex-shrink-0">Review this batch:</h3>
-            </div>
-            
-            <div className="flex-grow w-full overflow-y-auto my-4 p-4 rounded-lg text-left" style={{ backgroundColor: 'var(--muted)'}}>
-                {batchAnswers.map((answer, index) => (
-                    <div key={answer.questionId} className="p-4 rounded-lg mb-3" style={{ backgroundColor: 'var(--card)', boxShadow: 'var(--shadow-sm)'}}>
-                        <p className="font-bold">{index + 1}. {answer.question}</p>
-                        <div className="mt-2 text-sm space-y-1">
-                            {answer.isCorrect ? (
-                                <p style={{ color: 'var(--correct-fg)' }}>
-                                    Your answer: {answer.userAnswer} ✅
-                                </p>
-                            ) : (
-                                <>
-                                    <p style={{ color: 'var(--incorrect-fg)' }}>
-                                        Your answer: {answer.userAnswer} ❌
-                                    </p>
-                                    <p style={{ color: 'var(--correct-fg)' }}>
-                                        Correct answer: <strong>{answer.correctAnswer}</strong> ✅
-                                    </p>
-                                </>
-                            )}
-                            <p className="pt-2" style={{ color: 'var(--muted-foreground)' }}>
-                                <strong>Explanation:</strong> {answer.englishExplanation}
-                            </p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            
-            <button
-                onClick={onContinue}
-                className="w-full sm:w-auto font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 mt-4 flex-shrink-0"
+        <div className="relative w-full max-w-xl mx-auto">
+             <div 
+                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg z-10 p-6 md:p-8 transition-all duration-300"
                 style={{
-                    backgroundColor: 'var(--accent-theme)',
-                    color: 'white',
-                    boxShadow: 'var(--shadow)'
+                    backgroundColor: 'var(--card)',
+                    color: 'var(--card-foreground)',
+                    boxShadow: 'var(--shadow-lg)'
                 }}
             >
-                Continue
-            </button>
+                <div className="text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-2">Batch Complete!</h2>
+                    <p className="text-lg md:text-xl" style={{ color: 'var(--muted-foreground)' }}>
+                        Your score for this section: <strong className="font-bold" style={{ color: 'var(--accent-theme)' }}>{score}</strong> out of <strong>{total}</strong>
+                    </p>
+                </div>
+            
+                <div className="my-6 border-t" style={{ borderColor: 'var(--border)'}}></div>
+                
+                 <h3 className="text-lg font-semibold mb-4 text-center">Review this batch:</h3>
+                <div className="max-h-[40vh] md:max-h-[50vh] overflow-y-auto space-y-3 pr-2">
+                    {batchAnswers.map((answer, index) => (
+                        <div key={answer.questionId} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--muted)'}}>
+                            <div className="flex justify-between items-start">
+                                <p className="font-bold flex-1 pr-2">{index + 1}. {answer.question}</p>
+                                <button 
+                                    onClick={() => onShowExplanation(answer.arabicTranslation)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ml-2 flex-shrink-0 hover:opacity-80 transition-opacity"
+                                    style={{
+                                        backgroundColor: 'var(--accent)',
+                                        color: 'var(--accent-foreground)'
+                                    }}
+                                    aria-label="Show Explanation and Translation"
+                                    title="Show Explanation and Translation"
+                                >
+                                    ?
+                                </button>
+                            </div>
+                            <div className="mt-2 text-sm space-y-1">
+                                {answer.isCorrect ? (
+                                    <p style={{ color: 'var(--correct-fg)' }}>
+                                        Your answer: {answer.userAnswer} ✅
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p style={{ color: 'var(--incorrect-fg)' }}>
+                                            Your answer: {answer.userAnswer} ❌
+                                        </p>
+                                        <p style={{ color: 'var(--correct-fg)' }}>
+                                            Correct answer: <strong>{answer.correctAnswer}</strong> ✅
+                                        </p>
+                                    </>
+                                )}
+                                <p className="pt-2" style={{ color: 'var(--muted-foreground)' }}>
+                                    <strong>Explanation:</strong> {answer.englishExplanation}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-8 flex justify-center">
+                    <button
+                        onClick={onContinue}
+                        className="w-full sm:w-auto font-bold py-3 px-10 rounded-full text-lg transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{
+                            backgroundColor: 'var(--accent-theme)',
+                            color: 'var(--accent-theme-fg)',
+                            boxShadow: 'var(--shadow)'
+                        }}
+                    >
+                        Continue
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
-
 
 // --- FROM components/FinalResultCard.tsx ---
 const FinalResultCard = ({ total, onRestart, userAnswers }) => {
@@ -1243,62 +1324,74 @@ const FinalResultCard = ({ total, onRestart, userAnswers }) => {
     const incorrectAnswers = userAnswers.filter(a => !a.isCorrect);
 
     return (
-        <div className="text-center p-2 sm:p-4 w-full flex flex-col items-center h-full">
-            <div className="flex-shrink-0">
-                <h2 className="text-3xl font-bold mb-2">Quiz Complete!</h2>
-                <p className="text-xl mb-4" style={{ color: 'var(--muted-foreground)' }}>
-                    Your final score is: <strong className="font-bold" style={{ color: 'var(--foreground)' }}>{correctAnswers}</strong> out of <strong style={{ color: 'var(--foreground)' }}>{total}</strong>
-                </p>
-            </div>
-            
-            {incorrectAnswers.length > 0 ? (
-                <>
-                    <h3 className="text-lg font-semibold mt-4 mb-2 flex-shrink-0">Review your mistakes:</h3>
-                    <div className="flex-grow w-full overflow-y-auto my-4 p-4 rounded-lg text-left" style={{ backgroundColor: 'var(--muted)'}}>
-                        {incorrectAnswers.map((answer, index) => (
-                            <div key={answer.questionId} className="p-4 rounded-lg mb-3" style={{ backgroundColor: 'var(--card)', boxShadow: 'var(--shadow-sm)'}}>
-                                <p className="font-bold">{index + 1}. {answer.question}</p>
-                                <div className="mt-2 text-sm space-y-1">
-                                    <p style={{ color: 'var(--incorrect-fg)' }}>
-                                        Your answer: {answer.userAnswer} ❌
-                                    </p>
-                                    <p style={{ color: 'var(--correct-fg)' }}>
-                                        Correct answer: <strong>{answer.correctAnswer}</strong> ✅
-                                    </p>
-                                    <p className="pt-2" style={{ color: 'var(--muted-foreground)' }}>
-                                        <strong>Explanation:</strong> {answer.englishExplanation}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </>
-            ) : (
-                <div className="flex-grow flex items-center justify-center">
-                    <p className="text-lg font-semibold" style={{color: 'var(--correct-fg)'}}>
-                        Congratulations! You answered all questions correctly! 🎉
-                    </p>
-                </div>
-            )}
-            
-            <button
-                onClick={onRestart}
-                className="w-full sm:w-auto font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 mt-4 flex-shrink-0"
+        <div className="relative w-full max-w-xl mx-auto">
+            <div 
+                className="relative rounded-2xl shadow-lg z-10 p-6 md:p-8 transition-all duration-300"
                 style={{
-                    backgroundColor: 'var(--accent-theme)',
-                    color: 'white',
-                    boxShadow: 'var(--shadow)'
+                    backgroundColor: 'var(--card)',
+                    color: 'var(--card-foreground)',
+                    boxShadow: 'var(--shadow-lg)'
                 }}
             >
-                Restart Quiz
-            </button>
+                <div className="text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-2">Quiz Complete!</h2>
+                    <p className="text-lg md:text-xl" style={{ color: 'var(--muted-foreground)' }}>
+                        Your final score is: <strong className="font-bold" style={{ color: 'var(--accent-theme)' }}>{correctAnswers}</strong> out of <strong>{total}</strong>
+                    </p>
+                </div>
+
+                <div className="my-6 border-t" style={{ borderColor: 'var(--border)'}}></div>
+
+                 {incorrectAnswers.length > 0 ? (
+                    <>
+                        <h3 className="text-lg font-semibold mb-4 text-center">Review your mistakes:</h3>
+                        <div className="max-h-[40vh] md:max-h-[50vh] overflow-y-auto space-y-3 pr-2">
+                             {incorrectAnswers.map((answer, index) => (
+                                <div key={answer.questionId} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--muted)' }}>
+                                    <p className="font-bold">{index + 1}. {answer.question}</p>
+                                    <div className="mt-2 text-sm space-y-1">
+                                        <p style={{ color: 'var(--incorrect-fg)' }}>
+                                            Your answer: {answer.userAnswer} ❌
+                                        </p>
+                                        <p style={{ color: 'var(--correct-fg)' }}>
+                                            Correct answer: <strong>{answer.correctAnswer}</strong> ✅
+                                        </p>
+                                        <p className="pt-2" style={{ color: 'var(--muted-foreground)' }}>
+                                            <strong>Explanation:</strong> {answer.englishExplanation}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-2xl font-semibold" style={{color: 'var(--correct-fg)'}}>
+                            Congratulations! 🎉<br/>You answered all questions correctly!
+                        </p>
+                    </div>
+                )}
+                <div className="mt-8 flex justify-center">
+                    <button
+                        onClick={onRestart}
+                        className="w-full sm:w-auto font-bold py-3 px-10 rounded-full text-lg transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{
+                            backgroundColor: 'var(--accent-theme)',
+                            color: 'var(--accent-theme-fg)',
+                            boxShadow: 'var(--shadow)'
+                        }}
+                    >
+                        Restart Quiz
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
 
 
 // --- FROM components/QuizCard.tsx ---
-const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext }) => {
+const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, selectedAnswer, correctAnswer, onNext, currentQuestion, totalQuestions }) => {
   
   const shuffledOptions = useMemo(() => {
     if (type === 'True/False') {
@@ -1310,9 +1403,9 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
   const getButtonStyles = (option) => {
     if (!selectedAnswer) {
       return {
-        backgroundColor: 'var(--muted)',
+        backgroundColor: 'var(--accent)',
         color: 'var(--accent-foreground)',
-        boxShadow: 'var(--shadow-sm)'
+        border: '1px solid var(--border)'
       };
     }
 
@@ -1323,7 +1416,7 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
       return {
         backgroundColor: 'var(--correct-bg)',
         color: 'var(--correct-fg)',
-        boxShadow: 'var(--shadow)',
+        border: '1px solid var(--correct-fg)',
         transform: 'scale(1.02)'
       };
     }
@@ -1332,79 +1425,106 @@ const QuizCard = ({ type, question, options, onSelectAnswer, onHelpClick, select
       return {
         backgroundColor: 'var(--incorrect-bg)',
         color: 'var(--incorrect-fg)',
-        boxShadow: 'var(--shadow)'
+        border: '1px solid var(--incorrect-fg)'
       };
     }
 
     return {
       backgroundColor: 'var(--muted)',
       color: 'var(--muted-foreground)',
-      opacity: 0.6,
+      opacity: 0.7,
+      border: '1px solid transparent'
     };
   };
   
   const isTrueFalse = type === 'True/False';
 
   return (
-    <div className="flex flex-col items-center w-full h-full relative">
-       <button 
-          onClick={onHelpClick} 
-          className="absolute top-[-10px] right-[-10px] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:opacity-80 transition-opacity z-10"
-          style={{
-            backgroundColor: 'var(--muted)',
-            color: 'var(--muted-foreground)'
-          }}
-          aria-label="Help & Translation"
-          title="Help & Translation"
+    <div className="relative w-full max-w-xl mx-auto">
+        <div 
+            className="absolute top-0 left-0 w-full h-full rounded-2xl z-0 transition-all duration-300"
+            style={{
+                backgroundColor: 'var(--card)',
+                opacity: 0.6,
+                boxShadow: 'var(--shadow-lg)',
+                transform: 'rotate(-2deg) scale(0.95)'
+            }}
+        ></div>
+        <div 
+            className="absolute top-0 left-0 w-full h-full rounded-2xl z-0 transition-all duration-300"
+            style={{
+                backgroundColor: 'var(--card)',
+                opacity: 0.3,
+                boxShadow: 'var(--shadow-lg)',
+                transform: 'rotate(-4deg) scale(0.90)'
+            }}
+        ></div>
+        <div 
+            className="relative rounded-2xl z-10 p-6 md:p-8 transition-all duration-300"
+            style={{
+                backgroundColor: 'var(--card)',
+                color: 'var(--card-foreground)',
+                boxShadow: 'var(--shadow-lg)'
+            }}
         >
-          ?
-      </button>
-       <div className="flex-shrink-0 mb-4">
-        <span 
-          className="text-sm font-semibold uppercase px-4 py-2 rounded-full"
-          style={{ 
-            color: 'var(--accent-theme)',
-            backgroundColor: 'var(--muted)',
-          }}
-        >
-          {type.replace(/_/g, ' ')}
-        </span>
-      </div>
-      <h2 className="text-xl md:text-2xl font-bold mb-6 text-center leading-relaxed flex-shrink-0">
-        {question}
-      </h2>
-      
-      {/* Options container with dynamic layout */}
-      <div className={`flex-grow w-full flex items-center justify-center ${isTrueFalse ? 'px-4' : ''}`}>
-        <div className={`w-full ${isTrueFalse ? 'grid grid-cols-2 gap-4' : 'flex flex-col space-y-4'}`}>
-            {shuffledOptions.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => onSelectAnswer(option)}
-                disabled={!!selectedAnswer}
-                className={`p-4 rounded-xl text-center font-semibold text-lg transition-all duration-300 ${!selectedAnswer ? 'transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
-                style={getButtonStyles(option)}
-              >
-                {option}
-              </button>
-            ))}
-        </div>
-      </div>
+            <div className="flex items-center justify-between gap-4 mb-4">
+                 <span 
+                    className="text-sm font-semibold uppercase px-3 py-1 rounded-full"
+                    style={{ 
+                        backgroundColor: 'var(--accent)',
+                        color: 'var(--accent-foreground)'
+                    }}
+                >
+                    {type.replace(/_/g, ' ')}
+                </span>
+                 <button 
+                    onClick={onHelpClick} 
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg hover:opacity-80 transition-opacity flex-shrink-0"
+                    style={{
+                        backgroundColor: 'var(--accent)',
+                        color: 'var(--accent-foreground)'
+                    }}
+                    aria-label="Help & Translation"
+                    title="Help & Translation"
+                >
+                    ?
+                </button>
+            </div>
 
-      <div className="mt-8 w-full flex justify-center flex-shrink-0">
-          <button
-              onClick={onNext}
-              disabled={!selectedAnswer}
-              className="w-full sm:w-1/2 font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
-              style={{
-                  backgroundColor: 'var(--accent-theme)',
-                  color: 'white',
-                  boxShadow: !selectedAnswer ? 'none' : 'var(--shadow)'
-              }}
-          >
-              Next Question
-          </button>
-      </div>
+            <ProgressBar current={currentQuestion} total={totalQuestions} />
+            
+            <h2 className="text-xl md:text-2xl font-bold leading-relaxed my-6 min-h-[6rem] flex items-center">
+                {question}
+            </h2>
+        
+            <div className={`w-full ${isTrueFalse ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'flex flex-col space-y-4'}`}>
+                {shuffledOptions.map((option, index) => (
+                <button
+                    key={index}
+                    onClick={() => onSelectAnswer(option)}
+                    disabled={!!selectedAnswer}
+                    className={`p-4 rounded-xl text-left font-semibold text-base md:text-lg transition-all duration-300 ${!selectedAnswer ? 'transform active:scale-95 hover:brightness-95' : 'cursor-not-allowed'}`}
+                    style={getButtonStyles(option)}
+                >
+                    {option}
+                </button>
+                ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+                <button
+                    onClick={onNext}
+                    disabled={!selectedAnswer}
+                    className="w-full sm:w-auto font-bold py-3 px-10 rounded-full text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                        backgroundColor: 'var(--accent-theme)',
+                        color: 'var(--accent-theme-fg)',
+                        boxShadow: !selectedAnswer ? 'none' : 'var(--shadow)'
+                    }}
+                >
+                    Next
+                </button>
+            </div>
+        </div>
     </div>
   );
 };
@@ -1423,10 +1543,8 @@ const App = () => {
     const [showBatchResult, setShowBatchResult] = useState(false);
     
     useEffect(() => {
-        // Categorize and shuffle questions
         const trueFalse = quizData.filter(q => q.options.length === 2 && q.options.includes('True') && q.options.includes('False')).map(q => ({...q, type: 'True/False'}));
         const otherQuizzes = quizData.filter(q => !(q.options.length === 2 && q.options.includes('True') && q.options.includes('False')));
-        
         setQuestions(shuffleArray([...trueFalse, ...otherQuizzes]));
     }, []);
 
@@ -1443,7 +1561,8 @@ const App = () => {
             userAnswer: answer,
             correctAnswer: questions[currentQuestionIndex].correctAnswer,
             isCorrect: isCorrect,
-            englishExplanation: questions[currentQuestionIndex].englishExplanation
+            englishExplanation: questions[currentQuestionIndex].englishExplanation,
+            arabicTranslation: questions[currentQuestionIndex].arabicTranslation
         };
         
         setUserAnswers(prev => [...prev, newAnswer]);
@@ -1513,6 +1632,7 @@ const App = () => {
                     total={BATCH_SIZE}
                     onContinue={handleContinueAfterBatch}
                     batchAnswers={batchAnswers}
+                    onShowExplanation={handleShowExplanation}
                 />
             );
         }
@@ -1528,34 +1648,30 @@ const App = () => {
                 selectedAnswer={currentSelection}
                 correctAnswer={currentQuestion.correctAnswer}
                 onNext={handleNextQuestion}
+                currentQuestion={currentQuestionIndex + 1}
+                totalQuestions={questions.length}
             />
         );
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans">
-            <div className="w-full max-w-2xl mx-auto">
-                <h1 className="text-3xl md:text-4xl font-bold text-center mb-2" style={{ color: 'var(--foreground)' }}>
-                  Management Principles Quiz
-                </h1>
-                <p className="text-center mb-8" style={{ color: 'var(--muted-foreground)' }}>
-                  Test your knowledge in organization and management.
-                </p>
-                
-                {!(quizFinished || showBatchResult) && (
-                   <ProgressBar current={currentQuestionIndex + 1} total={questions.length} />
-                )}
-
-                <div 
-                  className="rounded-3xl p-6 sm:p-8 transition-all duration-300 h-[560px] flex items-center justify-center relative"
-                  style={{
-                    backgroundColor: 'var(--card)',
-                    boxShadow: 'var(--shadow-lg)'
-                  }}
-                >
-                    {renderContent()}
+        <div className="min-h-screen">
+            <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8 font-sans">
+                <div className="w-full max-w-3xl mx-auto transition-all duration-300">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl md:text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
+                          Management Principles Quiz
+                        </h1>
+                        <p className="mt-2" style={{ color: 'var(--muted-foreground)' }}>
+                          Test your knowledge in organization and management.
+                        </p>
+                    </div>
+                    
+                    <div className="transition-all duration-300">
+                        {renderContent()}
+                    </div>
                 </div>
-            </div>
+            </main>
             {explanation && <ExplanationWidget 
               isOpen={isExplanationOpen}
               onClose={() => setIsExplanationOpen(false)}
